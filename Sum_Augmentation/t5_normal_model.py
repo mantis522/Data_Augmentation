@@ -1,12 +1,16 @@
 from transformers import T5ForConditionalGeneration, T5Tokenizer
-import os
 import pandas as pd
 import re
+import time
+import torch
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+start = time.time()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # initialize the model architecture and weights
 model = T5ForConditionalGeneration.from_pretrained("t5-base")
+model.to(device)
 # initialize the model tokenizer
 tokenizer = T5Tokenizer.from_pretrained("t5-base")
 
@@ -17,11 +21,12 @@ original_text = df_imdb['text'][42]
 
 # encode the text into tensor of integers using the appropriate tokenizer
 inputs = tokenizer.encode(original_text, return_tensors="pt", max_length=512, truncation=True)
+inputs = inputs.to(device)
 
 # generate the summarization output
 outputs = model.generate(
     inputs,
-    max_length=150,
+    max_length=300,
     min_length=40,
     length_penalty=2.0,
     num_beams=4,
@@ -29,8 +34,7 @@ outputs = model.generate(
 # just for debugging
 
 def cleanText(readData):
-    text = re.sub('</s>', '', readData)
-    text = re.sub(r'\<[^)]*\>', '', text)
+    text = re.sub("<[^>]*>", '', readData)
 
     return text
 
@@ -39,4 +43,6 @@ print("original_text : ", original_text)
 
 text = tokenizer.decode(outputs[0])
 
-print("output_text : ", text)
+print("output_text : ", cleanText(text))
+
+print("time :", time.time() - start)

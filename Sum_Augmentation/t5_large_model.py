@@ -19,7 +19,7 @@ tokenizer = T5Tokenizer.from_pretrained("t5-large")
 imdb_data = r"D:\ruin\data\IMDB Dataset2.csv"
 df_imdb = pd.read_csv(imdb_data)
 
-original_text = df_imdb['text'][150]
+original_text = df_imdb['text'][28]
 
 # encode the text into tensor of integers using the appropriate tokenizer
 inputs = tokenizer.encode(original_text, return_tensors="pt", max_length=1024, truncation=True)
