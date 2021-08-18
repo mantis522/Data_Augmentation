@@ -17,27 +17,7 @@ class Attention(Layer):
                  bias=True,
                  **kwargs
                  ):
-        """
-        Keras Layer that implements an Attention mechanism for temporal data.
-        Supports Masking.
-        Follows the work of Raffel et al. [https://arxiv.org/abs/1512.08756]
-        # Input shape
-            3D tensor with shape: `(samples, steps, features)`.
-        # Output shape
-            2D tensor with shape: `(samples, features)`.
-        :param kwargs:
-        Just put it on top of an RNN Layer (GRU/LSTM/SimpleRNN) with return_sequences=True.
-        The dimensions are inferred based on the output shape of the RNN.
-        Example:
-            # 1
-            model.add(LSTM(64, return_sequences=True))
-            model.add(Attention())
-            # next add a Dense layer (for classification/regression) or whatever...
-            # 2
-            hidden = LSTM(64, return_sequences=True)(words)
-            sentence = Attention()(hidden)
-            # next add a Dense layer (for classification/regression) or whatever...
-        """
+
         super(Attention, self).__init__()
         self.bias = bias
         self.init = initializers.get('glorot_uniform')
@@ -47,6 +27,7 @@ class Attention(Layer):
         :param input_shape:
         :return:
         '''
+        ## input_shape == (None, 400, 256)
         self.output_dim = input_shape[-1]
         self.W = self.add_weight(
                                  name='{}_W'.format(self.name),
@@ -163,7 +144,7 @@ class ModelHepler:
         callback_list = []
         if use_early_stop:
             # EarlyStopping
-            early_stopping = EarlyStopping(monitor='val_accuracy', patience=5, mode='max')
+            early_stopping = EarlyStopping(monitor='val_accuracy', patience=3, mode='max')
             callback_list.append(early_stopping)
         if checkpoint_path is not None:
             # save model
@@ -199,6 +180,10 @@ class ModelHepler:
         latest = tf.train.latest_checkpoint(checkpoint_dir)
         print('restore model name is : ', latest)
         self.model.load_weights(latest)
+
+
+## -----------------------------------------------
+
 
 class_num = 2
 maxlen = 400
@@ -244,7 +229,6 @@ model_hepler = ModelHepler(class_num=class_num,
                            batch_size=batch_size
                            )
 model_hepler.load_model(checkpoint_path=checkpoint_path)
-# 重新评估模型  0.8790
 loss, acc = model_hepler.model.evaluate(x_test, y_test, verbose=2)
 print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
 
