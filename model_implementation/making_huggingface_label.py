@@ -2,9 +2,10 @@ import pandas as pd
 from transformers import pipeline
 import time
 
+
 start = time.time()
 
-classifier = pipeline('sentiment-analysis')
+classifier = pipeline('sentiment-analysis', device=0)
 
 class making_label:
     def __init__(self, count):
@@ -26,7 +27,7 @@ class making_label:
             summarized_text = data['t5-large_text'][number]
             original_label = data['original_label'][number]
 
-            huggingface_classifier = classifier(summarized_text)
+            huggingface_classifier = classifier(summarized_text, truncation=True)
             huggingface_sentiment = huggingface_classifier[0]['label']
 
             if huggingface_sentiment == 'NEGATIVE':
