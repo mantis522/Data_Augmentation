@@ -54,7 +54,6 @@ class BIRNN(tf.keras.Model):
         self.dropout = Dropout(0.5)
         self.classifier = Dense(self.class_num, activation=self.last_activation)
         self.attention = BahdanauAttention(64)
-        # self.concat = Concatenate()
 
     def call(self, inputs):
         emb = self.embedding(inputs)

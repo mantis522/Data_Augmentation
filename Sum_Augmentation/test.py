@@ -1,13 +1,7 @@
-import pandas as pd
+import torch
 
-# list of name, degree, score
-nme = ["aparna", "pankaj", "sudhir", "Geeku"]
-deg = ["MBA", "BCA", "M.Tech", "MBA"]
-scr = [90, 40, 80, 98]
+USE_CUDA = torch.cuda.is_available()
+print(USE_CUDA)
 
-# dictionary of lists
-dict2 = {'name': nme, 'degree': deg, 'score': scr}
-
-df = pd.DataFrame(dict2)
-
-df.to_csv("test.csv")
+device = torch.device('cuda:0' if USE_CUDA else 'cpu')
+print('학습을 진행하는 기기:',device)
