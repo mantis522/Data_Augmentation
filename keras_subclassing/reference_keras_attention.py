@@ -52,16 +52,22 @@ class Attention(Layer):
 
     def call(self, inputs, mask=None):
         # (N, step, d), (d, 1)  ==>   (N, step, 1)
-        e = tf.matmul(inputs, self.W, )
+        # score shape = (batch_size, max_length, 1)
+        # inputs는 values.
+        #
+        score = tf.matmul(inputs, self.W)
         if self.bias:
-            e += self.b
-        e = tf.tanh(e)
-        a = tf.nn.softmax(e, axis=1)
+            score += self.b
+
+        score = tf.tanh(score)
+        attention_weights = tf.nn.softmax(score, axis=1)
         # (N, step, d) (N, step, 1) ====> (N, step, d)
-        c = inputs*a
-        # (N, d)
-        c = tf.reduce_sum(c, axis=1)
-        return c
+        # 여기서 input은 values.
+        context_vector = inputs * attention_weights
+        # (N, d), axis=1은 행단위로 sum
+        context_vector = tf.reduce_sum(context_vector, axis=1)
+
+        return context_vector
 
     def get_config(self):
         return {'units': self.output_dim}
