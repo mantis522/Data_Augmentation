@@ -54,7 +54,10 @@ class Attention(Layer):
         # (N, step, d), (d, 1)  ==>   (N, step, 1)
         # score shape = (batch_size, max_length, 1)
         # inputs는 values.
+        # matmul은 곱해서 더하는 형식
+        # [1, 2] [10]      [1*10 + 2+20]    = [50.]
         #
+        # 출처: https://altongmon.tistory.com/709 [IOS를 Java]
         score = tf.matmul(inputs, self.W)
         if self.bias:
             score += self.b
