@@ -31,6 +31,8 @@ max_len = 500
 X_train = pad_sequences(X_train, maxlen=max_len)
 X_test = pad_sequences(X_test, maxlen=max_len)
 
+print(y_train.shape)
+
 class MyModel(tf.keras.Model):
     def __init__(self):
         super(MyModel, self).__init__()
