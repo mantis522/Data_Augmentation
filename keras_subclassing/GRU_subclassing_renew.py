@@ -67,7 +67,7 @@ class ModelHelper:
         # 너무 정확도 차이가 많이 남.
 
         if use_early_stop:
-            early_stopping = EarlyStopping(monitor='val_loss', patience=3, mode='max')
+            early_stopping = EarlyStopping(monitor='val_acc', patience=3, mode='max')
             callback_list.append(early_stopping)
 
         if checkpoint_path is not None:
@@ -129,8 +129,11 @@ def max_text():
     return max_length
 
 text_num = max_text()
-maxlen = text_num
 
+
+maxlen = text_num
+batch_size = 128
+epochs = 15
 
 def Glove_Embedding():
     embeddings_index = {}
@@ -155,30 +158,23 @@ def Glove_Embedding():
 
 embedding_matrix = Glove_Embedding()
 
-batch_size = 128
-epochs = 10
 
 
 train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
 test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
-x_train = train_df['text'].values
-x_train = t.texts_to_sequences(x_train)
-x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
-y_train = train_df['label'].values
-y_train = to_categorical(np.asarray(y_train))
+def making_dataset(data_df):
+    x_train = data_df['text'].values
+    x_train = t.texts_to_sequences(x_train)
+    x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
+    y_train = data_df['label'].values
+    y_train = to_categorical(np.asarray(y_train))
 
-x_test = test_df['text'].values
-x_test = t.texts_to_sequences(x_test)
-x_test = sequence.pad_sequences(x_test, maxlen=maxlen, padding='post')
-y_test = test_df['label'].values
-y_test = to_categorical(np.asarray(y_test))
+    return x_train, y_train
 
-x_val = val_df['text'].values
-x_val = t.texts_to_sequences(x_val)
-x_val = sequence.pad_sequences(x_test, maxlen=maxlen, padding='post')
-y_val = val_df['label'].values
-y_val = to_categorical(np.asarray(y_val))
+x_train, y_train = making_dataset(train_df)
+x_test, y_test = making_dataset(test_df)
+x_val, y_val = making_dataset(val_df)
 
 print('X_train size:', x_train.shape)
 print('y_train size:', y_train.shape)
