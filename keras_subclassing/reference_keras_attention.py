@@ -211,6 +211,11 @@ checkpoint_path = 'save_model_dir\\'+MODEL_NAME+'\\cp-{epoch:04d}.ckpt'
 x_train = pad_sequences(x_train, maxlen=maxlen, padding='post')
 x_test = pad_sequences(x_test, maxlen=maxlen, padding='post')
 
+print('X_train size:', x_train.shape)
+print('y_train size:', y_train.shape)
+print('X_test size:', x_test.shape)
+print('y_test size:', y_test.shape)
+
 model_hepler = ModelHepler(class_num=class_num,
                            maxlen=maxlen,
                            max_features=max_features,
