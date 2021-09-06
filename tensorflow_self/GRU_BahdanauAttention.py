@@ -3,31 +3,77 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Bidirectional, Embedding, Dense, GRU
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 import os
 
+class Attention(Layer):
+    def __init__(self, bias=True):
+        super(Attention, self).__init__()
+        self.bias = bias
+        self.init = tf.keras.initializers.get('glorot_uniform')
+
+    def build(self, input_shape):
+        self.output_dim = input_shape[-1]
+        self.W = self.add_weight(name='{}_W'.format(self.name),
+                                 shape=(input_shape[2], 1),
+                                 initializer=self.init,
+                                 trainable=True
+                                 )
+        if self.bias:
+            self.b = self.add_weight(
+                                     name='{}_b'.format(self.name),
+                                     shape=(input_shape[1], 1),
+                                     initializer='zero',
+                                     trainable=True
+                                     )
+        else:
+            self.b = None
+
+        self.built = True
+
+    def compute_mask(self, inputs, mask=None):
+        return None
+
+    def call(self, inputs, mask=None):
+        score = tf.matmul(inputs, self.W)
+        if self.bias:
+            score += self.b
+
+        score = tf.tanh(score)
+        attention_weights = tf.nn.softmax(score, axis=1)
+        context_vector = inputs * attention_weights
+        context_vector = tf.reduce_sum(context_vector, axis=1)
+
+        return context_vector
+
+    def get_config(self):
+        return {'units': self.output_dim}
 
 
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
         super(MyModel, self).__init__()
-        self.Embedding_layer = tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=100,
+        self.maxlen = text_num
+        self.Embedding_layer = Embedding(input_dim=vocab_size, output_dim=100,
                                                          weights=[embedding_matrix], input_length=text_num,
                                                          trainable=False)
-        self.GRU_layer = tf.keras.layers.GRU(128)
-        self.Dense_layer = tf.keras.layers.Dense(2, activation='softmax')
-        self.maxlen = text_num
+        self.GRU_layer = Bidirectional(layer=GRU(units=128, activation='tanh', return_sequences=True), merge_mode='concat')
+        self.attention = Attention()
+        self.Dense_layer = Dense(2, activation='softmax')
 
     def call(self, input):
         if len(input.get_shape()) != 2:
-            raise ValueError('The rank of inputs of TextBiRNNAtt must be 2, but now is {}'.format(input.get_shape()))
+            raise ValueError('The rank of inputs of MyModel must be 2, but now is {}'.format(input.get_shape()))
         if input.get_shape()[1] != self.maxlen:
-            raise ValueError('The maxlen of inputs of TextBiRNNAtt must be %d, but now is %d' % (self.maxlen, input.get_shape()[1]))
+            raise ValueError('The maxlen of inputs of MyModel must be %d, but now is %d' % (self.maxlen, input.get_shape()[1]))
 
-        net = self.Embedding_layer(input)
-        net = self.GRU_layer(net)
+        emb = self.Embedding_layer(input)
+        net = self.GRU_layer(emb)
+        net = self.attention(net)
         net = self.Dense_layer(net)
 
         return net
@@ -54,7 +100,9 @@ class ModelHelper:
         model = MyModel(vocab_size=self.vocab_size,
                         embedding_matrix=self.embedding_matrix,
                         text_num=self.maxlen)
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+        model.compile(optimizer='adam',
+                      loss='categorical_crossentropy',
+                      metrics=['acc'])
         self.model = model
 
     def get_callback(self, use_early_stop=True, tensorboard_log_dir='logs\\FastText-epoch-5',

@@ -20,12 +20,13 @@ class MyModel(tf.keras.Model):
 
     def call(self, input):
         if len(input.get_shape()) != 2:
-            raise ValueError('The rank of inputs of TextBiRNNAtt must be 2, but now is {}'.format(input.get_shape()))
+            raise ValueError('The rank of inputs of MyModel must be 2, but now is {}'.format(input.get_shape()))
         if input.get_shape()[1] != self.maxlen:
-            raise ValueError('The maxlen of inputs of TextBiRNNAtt must be %d, but now is %d' % (self.maxlen, input.get_shape()[1]))
+            raise ValueError('The maxlen of inputs of MyModel must be %d, but now is %d' % (self.maxlen, input.get_shape()[1]))
 
         net = self.Embedding_layer(input)
         net = self.GRU_layer(net)
+        print(net.shape)
         net = self.Dense_layer(net)
 
         return net
