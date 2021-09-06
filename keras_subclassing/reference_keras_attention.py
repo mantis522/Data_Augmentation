@@ -216,7 +216,7 @@ print('y_train size:', y_train.shape)
 print('X_test size:', x_test.shape)
 print('y_test size:', y_test.shape)
 
-model_hepler = ModelHepler(class_num=class_num,
+model_helper = ModelHepler(class_num=class_num,
                            maxlen=maxlen,
                            max_features=max_features,
                            embedding_dims=embedding_dims,
@@ -224,24 +224,24 @@ model_hepler = ModelHepler(class_num=class_num,
                            batch_size=batch_size
                            )
 
-model_hepler.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir, checkpoint_path=checkpoint_path)
-model_hepler.fit(x_train=x_train, y_train=y_train, x_val=x_test, y_val=y_test)
+model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir, checkpoint_path=checkpoint_path)
+model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_test, y_val=y_test)
 
-result = model_hepler.model.predict(x_test)
-test_score = model_hepler.model.evaluate(x_test, y_test,
+result = model_helper.model.predict(x_test)
+test_score = model_helper.model.evaluate(x_test, y_test,
                             batch_size=batch_size)
 print("test loss:", test_score[0], "test accuracy", test_score[1])
 
 print('Restored Model...')
-model_hepler = ModelHepler(class_num=class_num,
+model_helper = ModelHepler(class_num=class_num,
                            maxlen=maxlen,
                            max_features=max_features,
                            embedding_dims=embedding_dims,
                            epochs=epochs,
                            batch_size=batch_size
                            )
-model_hepler.load_model(checkpoint_path=checkpoint_path)
-loss, acc = model_hepler.model.evaluate(x_test, y_test, verbose=2)
+model_helper.load_model(checkpoint_path=checkpoint_path)
+loss, acc = model_helper.model.evaluate(x_test, y_test, verbose=2)
 print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
 
 

@@ -8,6 +8,8 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 import os
 
+
+
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
         super(MyModel, self).__init__()
@@ -38,24 +40,20 @@ def checkout_dir(dir_path, do_delete=False):
         print(dir_path, 'make dir ok')
         os.makedirs(dir_path)
 
-# model = MyModel(vocab_size=vocab_size, embedding_matrix=embedding_matrix, text_num=text_num)
-# model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
-# history = model.fit(x_train, y_train, epochs=15, batch_size=60, validation_split=0.2)
-
 class ModelHelper:
     def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
         self.batch_size = batch_size
         self.epochs = epochs
         self.vocab_size = vocab_size
         self.embedding_matrix = embedding_matrix
-        self.text_num = text_num
+        self.maxlen = text_num
         self.callback_list = []
         self.create_model()
 
     def create_model(self):
         model = MyModel(vocab_size=self.vocab_size,
                         embedding_matrix=self.embedding_matrix,
-                        text_num=self.text_num)
+                        text_num=self.maxlen)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
         self.model = model
 
@@ -193,7 +191,7 @@ checkpoint_path = 'save_model_dir\\'+MODEL_NAME+'\\cp-{epoch:04d}.ckpt'
 # def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
 
 model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
-                           embedding_matrix=embedding_matrix, text_num=text_num)
+                           embedding_matrix=embedding_matrix, text_num=maxlen)
 
 model_helper.get_callback(use_early_stop=use_early_stop,
                           tensorboard_log_dir=tensorboard_log_dir,
@@ -209,7 +207,7 @@ print("test loss:", test_score[0], "test accuracy", test_score[1])
 print('Restored Model...')
 
 model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
-                           embedding_matrix=embedding_matrix, text_num=text_num)
+                           embedding_matrix=embedding_matrix, text_num=maxlen)
 model_helper.load_model(checkpoint_path=checkpoint_path)
 loss, acc = model_helper.model.evaluate(x_test, y_test, verbose=1)
 
