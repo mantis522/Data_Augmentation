@@ -109,9 +109,6 @@ class ModelHelper:
                      checkpoint_path="save_model_dir\\cp-moel.ckpt"):
         callback_list = []
 
-        # early stop 관련해서 수정할 것.
-        # 너무 정확도 차이가 많이 남.
-
         if use_early_stop:
             early_stopping = EarlyStopping(monitor='val_acc', patience=3, mode='max')
             callback_list.append(early_stopping)
@@ -204,8 +201,6 @@ def Glove_Embedding():
 
 embedding_matrix = Glove_Embedding()
 
-
-
 train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
 test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
@@ -235,8 +230,6 @@ use_early_stop=True
 tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
 # checkpoint_path = "save_model_dir\\{}\\cp-{epoch:04d}.ckpt".format(MODEL_NAME, '')
 checkpoint_path = 'save_model_dir\\'+MODEL_NAME+'\\cp-{epoch:04d}.ckpt'
-
-# def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
 
 model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
                            embedding_matrix=embedding_matrix, text_num=maxlen)
