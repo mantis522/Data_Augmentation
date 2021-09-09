@@ -6,6 +6,8 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+from tensorflow.keras import backend as K
+import tensorflow_addons as tfa
 import os
 
 class MyModel(tf.keras.Model):
@@ -26,7 +28,6 @@ class MyModel(tf.keras.Model):
 
         net = self.Embedding_layer(input)
         net = self.GRU_layer(net)
-        print(net.shape)
         net = self.Dense_layer(net)
 
         return net
@@ -38,6 +39,54 @@ def checkout_dir(dir_path, do_delete=False):
     if not os.path.exists(dir_path):
         print(dir_path, 'make dir ok')
         os.makedirs(dir_path)
+
+# def recall(y_target, y_pred):
+#     # clip(t, clip_value_min, clip_value_max) : clip_value_min~clip_value_max 이외 가장자리를 깎아 낸다
+#     # round : 반올림한다
+#     y_target_yn = K.round(K.clip(y_target, 0, 1)) # 실제값을 0(Negative) 또는 1(Positive)로 설정한다
+#     y_pred_yn = K.round(K.clip(y_pred, 0, 1)) # 예측값을 0(Negative) 또는 1(Positive)로 설정한다
+#
+#     # True Positive는 실제 값과 예측 값이 모두 1(Positive)인 경우이다
+#     count_true_positive = K.sum(y_target_yn * y_pred_yn)
+#
+#     # (True Positive + False Negative) = 실제 값이 1(Positive) 전체
+#     count_true_positive_false_negative = K.sum(y_target_yn)
+#
+#     # Recall =  (True Positive) / (True Positive + False Negative)
+#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
+#     recall = count_true_positive / (count_true_positive_false_negative + K.epsilon())
+#
+#     # return a single tensor value
+#     return recall
+#
+# def precision(y_target, y_pred):
+#     # clip(t, clip_value_min, clip_value_max) : clip_value_min~clip_value_max 이외 가장자리를 깎아 낸다
+#     # round : 반올림한다
+#     y_pred_yn = K.round(K.clip(y_pred, 0, 1)) # 예측값을 0(Negative) 또는 1(Positive)로 설정한다
+#     y_target_yn = K.round(K.clip(y_target, 0, 1)) # 실제값을 0(Negative) 또는 1(Positive)로 설정한다
+#
+#     # True Positive는 실제 값과 예측 값이 모두 1(Positive)인 경우이다
+#     count_true_positive = K.sum(y_target_yn * y_pred_yn)
+#
+#     # (True Positive + False Positive) = 예측 값이 1(Positive) 전체
+#     count_true_positive_false_positive = K.sum(y_pred_yn)
+#
+#     # Precision = (True Positive) / (True Positive + False Positive)
+#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
+#     precision = count_true_positive / (count_true_positive_false_positive + K.epsilon())
+#
+#     # return a single tensor value
+#     return precision
+#
+#
+# def f1score(y_target, y_pred):
+#     _recall = recall(y_target, y_pred)
+#     _precision = precision(y_target, y_pred)
+#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
+#     _f1_score = 2*((_precision*_recall)/(_precision+_recall+K.epsilon()))
+#
+#     # return a single tensor value
+#     return _f1score
 
 class ModelHelper:
     def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
@@ -53,7 +102,16 @@ class ModelHelper:
         model = MyModel(vocab_size=self.vocab_size,
                         embedding_matrix=self.embedding_matrix,
                         text_num=self.maxlen)
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc',
+                                                                                  tf.keras.metrics.Recall(name='recall'),
+                                                                                  tf.keras.metrics.Precision(name='precision'),
+                                                                                  tfa.metrics.F1Score(name='F1_micro',
+                                                                                                      num_classes=2,
+                                                                                                      average='micro'),
+                                                                                  tfa.metrics.F1Score(name='F1_macro',
+                                                                                                      num_classes=2,
+                                                                                                      average='macro')
+                                                                                  ])
         self.model = model
 
     def get_callback(self, use_early_stop=True, tensorboard_log_dir='logs\\FastText-epoch-5',
@@ -64,15 +122,15 @@ class ModelHelper:
         # 너무 정확도 차이가 많이 남.
 
         if use_early_stop:
-            early_stopping = EarlyStopping(monitor='val_acc', patience=3, mode='max')
+            early_stopping = EarlyStopping(monitor='val_loss', patience=3, mode='min')
             callback_list.append(early_stopping)
 
         if checkpoint_path is not None:
             checkpoint_dir = os.path.dirname(checkpoint_path)
             checkout_dir(checkpoint_dir, do_delete=True)
             cp_callback = ModelCheckpoint(filepath=checkpoint_path,
-                                          monitor='val_acc',
-                                          mode='max',
+                                          monitor='val_loss',
+                                          mode='min',
                                           save_best_only=True,
                                           save_weights_only=True,
                                           verbose=1,
@@ -208,6 +266,27 @@ print('Restored Model...')
 model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
                            embedding_matrix=embedding_matrix, text_num=maxlen)
 model_helper.load_model(checkpoint_path=checkpoint_path)
-loss, acc = model_helper.model.evaluate(x_test, y_test, verbose=1)
+loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
 
 print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
+print("Restored model, recall : {:5.2f}%".format(100 * recall))
+print("Restored model, precision : {:5.2f}%".format(100 * precision))
+print("Restored model, f1_micro : {:5.2f}%".format(100 * F1_micro))
+print("Restored model, f1_macro : {:5.2f}%".format(100 * F1_macro))
+# print("Restored model, f1_score : {:5.2f}%".format(100 * _f1_score))
+
+# def f1_score_cal(recall, precision):
+#     f1_score = 2*((precision*recall)/(precision+recall+K.epsilon()))
+#     return f1_score
+#
+# f1_score = f1_score_cal(recall, precision)
+# print("Restored model, f1_score : {:5.2f}%".format(100 * f1_score))
+
+# def f1score(y_target, y_pred):
+#     _recall = recall(y_target, y_pred)
+#     _precision = precision(y_target, y_pred)
+#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
+#     _f1score = (2 * _recall * _precision) / (_recall + _precision + K.epsilon())
+#
+#     # return a single tensor value
+#     return _f1score
