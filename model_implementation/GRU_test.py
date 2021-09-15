@@ -40,54 +40,6 @@ def checkout_dir(dir_path, do_delete=False):
         print(dir_path, 'make dir ok')
         os.makedirs(dir_path)
 
-# def recall(y_target, y_pred):
-#     # clip(t, clip_value_min, clip_value_max) : clip_value_min~clip_value_max 이외 가장자리를 깎아 낸다
-#     # round : 반올림한다
-#     y_target_yn = K.round(K.clip(y_target, 0, 1)) # 실제값을 0(Negative) 또는 1(Positive)로 설정한다
-#     y_pred_yn = K.round(K.clip(y_pred, 0, 1)) # 예측값을 0(Negative) 또는 1(Positive)로 설정한다
-#
-#     # True Positive는 실제 값과 예측 값이 모두 1(Positive)인 경우이다
-#     count_true_positive = K.sum(y_target_yn * y_pred_yn)
-#
-#     # (True Positive + False Negative) = 실제 값이 1(Positive) 전체
-#     count_true_positive_false_negative = K.sum(y_target_yn)
-#
-#     # Recall =  (True Positive) / (True Positive + False Negative)
-#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
-#     recall = count_true_positive / (count_true_positive_false_negative + K.epsilon())
-#
-#     # return a single tensor value
-#     return recall
-#
-# def precision(y_target, y_pred):
-#     # clip(t, clip_value_min, clip_value_max) : clip_value_min~clip_value_max 이외 가장자리를 깎아 낸다
-#     # round : 반올림한다
-#     y_pred_yn = K.round(K.clip(y_pred, 0, 1)) # 예측값을 0(Negative) 또는 1(Positive)로 설정한다
-#     y_target_yn = K.round(K.clip(y_target, 0, 1)) # 실제값을 0(Negative) 또는 1(Positive)로 설정한다
-#
-#     # True Positive는 실제 값과 예측 값이 모두 1(Positive)인 경우이다
-#     count_true_positive = K.sum(y_target_yn * y_pred_yn)
-#
-#     # (True Positive + False Positive) = 예측 값이 1(Positive) 전체
-#     count_true_positive_false_positive = K.sum(y_pred_yn)
-#
-#     # Precision = (True Positive) / (True Positive + False Positive)
-#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
-#     precision = count_true_positive / (count_true_positive_false_positive + K.epsilon())
-#
-#     # return a single tensor value
-#     return precision
-#
-#
-# def f1score(y_target, y_pred):
-#     _recall = recall(y_target, y_pred)
-#     _precision = precision(y_target, y_pred)
-#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
-#     _f1_score = 2*((_precision*_recall)/(_precision+_recall+K.epsilon()))
-#
-#     # return a single tensor value
-#     return _f1score
-
 class ModelHelper:
     def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
         self.batch_size = batch_size
@@ -161,14 +113,43 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 
-file_path = r"D:\ruin\data\IMDB Dataset2.csv"
 glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
+base_data = pd.read_csv(r"D:\ruin\data\imdb_summarization\t5_base_with_huggingface_sentiment.csv")
+base_data = base_data.drop(['Unnamed: 0'], axis=1)
 
-imdb_csv = file_path
-df_imdb = pd.read_csv(imdb_csv)
-df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
+original_text_df = base_data['original_text']
+original_label_df = base_data['original_label']
+summarized_text_df = base_data['summarized_text']
+huggingface_sentiment_df = base_data['huggingface_sentiment']
 
-text_encoding = df_imdb['text']
+num_list = []
+non_num_list = []
+
+for i in range(len(original_text_df)):
+    if original_label_df[i] == huggingface_sentiment_df[i]:
+        num_list.append(i)
+    else:
+        non_num_list.append(i)
+
+train_df = base_data.loc[num_list]
+test_df = base_data.loc[non_num_list]
+
+# 훈련 데이터는 4만개, 테스트 데이터는 1만개.
+#
+
+cal_per = len(train_df)
+cal_per = int(cal_per)
+
+# train_df = train_df[:cal_per]
+# train_origin_df = train_df.drop(['summarized_text', 'huggingface_sentiment'], axis=1)
+# train_aug_df = train_df.drop(['original_text', 'original_label'], axis=1)
+#
+# train_aug_df.columns = ['original_text', 'original_label']
+#
+# train_df = pd.concat([train_origin_df, train_aug_df])
+
+text_encoding = train_df['original_text']
+
 
 t = Tokenizer()
 t.fit_on_texts(text_encoding)
@@ -213,16 +194,13 @@ def Glove_Embedding():
 
 embedding_matrix = Glove_Embedding()
 
-
-
-train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
 test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
 def making_dataset(data_df):
-    x_train = data_df['text'].values
+    x_train = data_df['original_text'].values
     x_train = t.texts_to_sequences(x_train)
     x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
-    y_train = data_df['label'].values
+    y_train = data_df['original_label'].values
     y_train = to_categorical(np.asarray(y_train))
 
     return x_train, y_train
@@ -242,10 +220,7 @@ MODEL_NAME = 'TestGRU-epoch-10-emb-100'
 
 use_early_stop=True
 tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
-# checkpoint_path = "save_model_dir\\{}\\cp-{epoch:04d}.ckpt".format(MODEL_NAME, '')
 checkpoint_path = 'save_model_dir\\'+MODEL_NAME+'\\cp-{epoch:04d}.ckpt'
-
-# def __init__(self, batch_size, epochs, vocab_size, embedding_matrix, text_num):
 
 model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
                            embedding_matrix=embedding_matrix, text_num=maxlen)
@@ -273,21 +248,3 @@ print("Restored model, recall : {:5.2f}%".format(100 * recall))
 print("Restored model, precision : {:5.2f}%".format(100 * precision))
 print("Restored model, f1_micro : {:5.2f}%".format(100 * F1_micro))
 print("Restored model, f1_macro : {:5.2f}%".format(100 * F1_macro))
-
-# print("Restored model, f1_score : {:5.2f}%".format(100 * _f1_score))
-
-# def f1_score_cal(recall, precision):
-#     f1_score = 2*((precision*recall)/(precision+recall+K.epsilon()))
-#     return f1_score
-#
-# f1_score = f1_score_cal(recall, precision)
-# print("Restored model, f1_score : {:5.2f}%".format(100 * f1_score))
-
-# def f1score(y_target, y_pred):
-#     _recall = recall(y_target, y_pred)
-#     _precision = precision(y_target, y_pred)
-#     # K.epsilon()는 'divide by zero error' 예방차원에서 작은 수를 더한다
-#     _f1score = (2 * _recall * _precision) / (_recall + _precision + K.epsilon())
-#
-#     # return a single tensor value
-#     return _f1score
