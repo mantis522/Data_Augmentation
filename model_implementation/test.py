@@ -100,7 +100,7 @@ model.add(Embedding(vocab_size, 100))
 model.add(GRU(128))
 model.add(Dense(2, activation='softmax'))
 
-es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=2)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=1)
 mc = ModelCheckpoint('GRU_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
