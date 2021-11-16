@@ -1,18 +1,12 @@
-room_num = str(input())
+from sys import stdin, stdout
 
-num_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 6]
+a = stdin.readline()
+A = set(stdin.readline().split())
+b = stdin.readline()
+B = stdin.readline().split()
 
-count = 1
-
-for i in range(len(room_num)):
-    pick_number = room_num[i]
-    if pick_number == '9':
-        pick_number = 6
-    if int(pick_number) in num_list:
-        num_list.remove(int(pick_number))
+for i in B:
+    if i in A:
+        stdout.write('1\n')
     else:
-        count += 1
-        num_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 6]
-        num_list.remove(int(pick_number))
-
-print(count)
+        stdout.write('0\n')

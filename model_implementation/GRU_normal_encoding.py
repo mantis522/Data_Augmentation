@@ -114,137 +114,96 @@ glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
 base_data = pd.read_csv(r"D:\ruin\data\imdb_summarization\t5_base_with_huggingface_sentiment.csv")
 base_data = base_data.drop(['Unnamed: 0'], axis=1)
 
-# text_encoding = base_data['original_text']
-#
-# original_text_df = base_data['original_text']
-# original_label_df = base_data['original_label']
-# summarized_text_df = base_data['summarized_text']
-# huggingface_sentiment_df = base_data['huggingface_sentiment']
-#
-# num_list = []
-# non_num_list = []
-#
-# for i in range(len(original_text_df)):
-#     if original_label_df[i] == huggingface_sentiment_df[i]:
-#         num_list.append(i)
-#     else:
-#         non_num_list.append(i)
-#
-# train_df = base_data.loc[num_list]
-# test_df = base_data.loc[non_num_list]
-#
-# # 훈련 데이터는 4만개, 테스트 데이터는 1만개.
-# #
-#
-# cal_per = len(train_df)
-# cal_per = int(cal_per)
-#
-# train_df = train_df[:cal_per]
-# train_origin_df = train_df.drop(['summarized_text', 'huggingface_sentiment'], axis=1)
-# train_aug_df = train_df.drop(['original_text', 'original_label'], axis=1)
-#
-# train_aug_df.columns = ['original_text', 'original_label']
-#
-# train_df = pd.concat([train_origin_df, train_aug_df])
-#
-# text_encoding = train_df['original_text']
-#
-#
-# t = Tokenizer()
-# t.fit_on_texts(text_encoding)
-#
-# vocab_size = len(t.word_index) + 1
-# sequences = t.texts_to_sequences(text_encoding)
-#
-# def max_text():
-#     for i in range(1, len(sequences)):
-#         max_length = len(sequences[0])
-#         if len(sequences[i]) > max_length:
-#             max_length = len(sequences[i])
-#     return max_length
-#
-# text_num = max_text()
-#
-#
-# maxlen = text_num
-# batch_size = 128
-# epochs = 15
-#
-# def Glove_Embedding():
-#     embeddings_index = {}
-#     f = open(glove_path, encoding='utf-8')
-#     for line in f:
-#         values = line.split()
-#         word = values[0]
-#         coefs = np.asarray(values[1:], dtype='float32')
-#         embeddings_index[word] = coefs
-#     f.close()
-#
-#     embedding_matrix = np.zeros((vocab_size, 100))
-#
-#     # fill in matrix
-#     for word, i in t.word_index.items():  # dictionary
-#         embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
-#         if embedding_vector is not None:
-#             # add to matrix
-#             embedding_matrix[i] = embedding_vector  # each row of matrix
-#
-#     return embedding_matrix
-#
-# embedding_matrix = Glove_Embedding()
-#
-# train_df, test_df = train_test_split(base_data, test_size=0.2, random_state=0)
-# test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
-#
-# def making_dataset(data_df):
-#     x_train = data_df['original_text'].values
-#     x_train = t.texts_to_sequences(x_train)
-#     x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
-#     y_train = data_df['original_label'].values
-#     y_train = to_categorical(np.asarray(y_train))
-#
-#     return x_train, y_train
-#
-# x_train, y_train = making_dataset(train_df)
-# x_test, y_test = making_dataset(test_df)
-# x_val, y_val = making_dataset(val_df)
-#
-# print('X_train size:', x_train.shape)
-# print('y_train size:', y_train.shape)
-# print('X_test size:', x_test.shape)
-# print('y_test size:', y_test.shape)
-# print('X_val size: ', x_val.shape)
-# print('y_val size: ', y_val.shape)
-#
-# MODEL_NAME = 'TestGRU-epoch-10-emb-100'
-#
-# use_early_stop=True
-# tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
-# checkpoint_path = 'save_model_dir\\'+MODEL_NAME+'\\cp-{epoch:04d}.ckpt'
-#
-# model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
-#                            embedding_matrix=embedding_matrix, text_num=maxlen)
-#
-# model_helper.get_callback(use_early_stop=use_early_stop,
-#                           tensorboard_log_dir=tensorboard_log_dir,
-#                           checkpoint_path=checkpoint_path)
-#
-# model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
-#
-# result = model_helper.model.predict(x_test)
-# test_score = model_helper.model.evaluate(x_test, y_test,
-#                             batch_size=batch_size)
-#
-# print("test loss:", test_score[0], "test accuracy", test_score[1])
-# print('Restored Model...')
-#
-# model_helper = ModelHelper(batch_size=batch_size, epochs=epochs, vocab_size=vocab_size,
-#                            embedding_matrix=embedding_matrix, text_num=maxlen)
-# model_helper.load_model(checkpoint_path=checkpoint_path)
-# loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
-#
-# print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
-# print("Restored model, recall : {:5.2f}%".format(100 * recall))
-# print("Restored model, precision : {:5.2f}%".format(100 * precision))
-# print("Restored model, f1_micro : {:5.2f}%".format(100 * F1_micro))
-# print("Restored model, f1_macro : {:5.2f}%".format(100 * F1_macro))
+original_text_df = base_data['original_text']
+original_label_df = base_data['original_label']
+summarized_text_df = base_data['summarized_text']
+huggingface_sentiment_df = base_data['huggingface_sentiment']
+
+num_list = []
+non_num_list = []
+
+for i in range(len(original_text_df)):
+    if original_label_df[i] == huggingface_sentiment_df[i]:
+        num_list.append(i)
+    else:
+        non_num_list.append(i)
+
+train_df = base_data.loc[num_list]
+test_df = base_data.loc[non_num_list]
+
+cal_per = len(train_df)
+cal_per = int(cal_per)
+
+train_df = train_df[:cal_per]
+train_origin_df = train_df.drop(['summarized_text', 'huggingface_sentiment'], axis=1)
+train_aug_df = train_df.drop(['original_text', 'original_label'], axis=1)
+
+train_aug_df.columns = ['original_text', 'original_label']
+
+train_df = pd.concat([train_origin_df, train_aug_df])
+
+test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
+
+text_encoding = train_df['original_text']
+
+t = Tokenizer()
+t.fit_on_texts(text_encoding)
+
+vocab_size = len(t.word_index) + 1
+sequences = t.texts_to_sequences(text_encoding)
+
+vocab_size = 1000
+
+def max_text():
+    for i in range(1, len(sequences)):
+        max_length = len(sequences[0])
+        if len(sequences[i]) > max_length:
+            max_length = len(sequences[i])
+    return max_length
+
+text_num = max_text()
+
+maxlen = text_num
+
+def making_dataset(data_df):
+    x_train = data_df['original_text'].values
+    x_train = t.texts_to_sequences(x_train)
+    x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
+    y_train = data_df['original_label'].values
+    y_train = to_categorical(np.asarray(y_train))
+
+    return x_train, y_train
+
+x_train, y_train = making_dataset(train_df)
+x_test, y_test = making_dataset(test_df)
+x_val, y_val = making_dataset(val_df)
+
+print('X_train size:', x_train.shape)
+print('y_train size:', y_train.shape)
+print('X_test size:', x_test.shape)
+print('y_test size:', y_test.shape)
+print('X_val size: ', x_val.shape)
+print('y_val size: ', y_val.shape)
+
+MODEL_NAME = 'TestGRU-epoch-10-emb-100'
+
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM, Embedding
+
+print('Build model...')
+model = Sequential()
+model.add(Embedding(vocab_size, 128))
+model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, activation='relu'))
+model.add(Dense(2, activation='sigmoid'))
+
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=2, patience=2)
+mc = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=2, save_best_only=True)
+
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+print('Train...')
+hist = model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=10, batch_size=64, verbose=1, callbacks=[es, mc])
+score, acc = model.evaluate(x_test, y_test, batch_size=64, verbose=1)
+print('Test score : ', score)
+print('Test accuracy : ', acc)
