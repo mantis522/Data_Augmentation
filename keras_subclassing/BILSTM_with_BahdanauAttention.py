@@ -4,6 +4,8 @@ from tensorflow.keras.datasets import imdb
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
+# 최근 케라스 버전에서는 시간이 너무 많이 걸림.
+
 class BahdanauAttention(tf.keras.Model):
   def __init__(self, units):
     super(BahdanauAttention, self).__init__()
