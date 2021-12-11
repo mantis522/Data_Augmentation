@@ -14,12 +14,12 @@ class Attention(Layer):
                  b_regularizer=None,
                  W_constraint=None,
                  b_constraint=None,
-                 bias=True,
+                 use_bias=True,
                  **kwargs
                  ):
 
         super(Attention, self).__init__()
-        self.bias = bias
+        self.bias = use_bias
         self.init = initializers.get('glorot_uniform')
 
     def build(self, input_shape):
@@ -62,9 +62,11 @@ class Attention(Layer):
 
         score = tf.tanh(score)
         attention_weights = tf.nn.softmax(score, axis=1)
+        print('context vector : ', attention_weights.shape)
         # (N, step, d) (N, step, 1) ====> (N, step, d)
         # 여기서 input은 values.
         context_vector = inputs * attention_weights
+
         # (N, d), axis=1은 행단위로 sum
         context_vector = tf.reduce_sum(context_vector, axis=1)
 
@@ -196,7 +198,7 @@ class_num = 2
 maxlen = 400
 embedding_dims = 100
 epochs = 10
-batch_size = 128
+batch_size = 256
 max_features = 5000
 
 MODEL_NAME = 'TextBiRNNAtt-epoch-10-emb-100'
