@@ -8,6 +8,8 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 import tensorflow_addons as tfa
 import os
+import datetime
+import csv
 
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
@@ -140,11 +142,149 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 if __name__ == '__main__':
-    file_path = r"D:\ruin\data\imdb_summarization\imdb_t5_base_sum.csv"
+    file_path = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
     glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
 
     imdb_csv = file_path
     df_imdb = pd.read_csv(imdb_csv)
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
+    df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    print(df_imdb)
+    # original_imdb = df_imdb['original_text']
+    # sum_imdb = df_imdb['summarized_text']
+    numbers = 1000
+    original_train_data = df_imdb[:numbers]
+
+    text_encoding = df_imdb['original_text']
+
+    t = Tokenizer()
+    t.fit_on_texts(text_encoding)
+
+    vocab_size = len(t.word_index) + 1
+
+    sequences = t.texts_to_sequences(text_encoding)
+
+    def max_text():
+        for i in range(1, len(sequences)):
+            max_length = len(sequences[0])
+            if len(sequences[i]) > max_length:
+                max_length = len(sequences[i])
+        return max_length
+
+    text_num = max_text()
+
+    maxlen = text_num
+    batch_size = 128
+    epochs = 2
+
+    def Glove_Embedding():
+        embeddings_index = {}
+        f = open(glove_path, encoding='utf-8')
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
+        f.close()
+
+        embedding_matrix = np.zeros((vocab_size, 100))
+
+        # fill in matrix
+        for word, i in t.word_index.items():  # dictionary
+            embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
+            if embedding_vector is not None:
+                # add to matrix
+                embedding_matrix[i] = embedding_vector  # each row of matrix
+
+        return embedding_matrix
+
+    embedding_matrix = Glove_Embedding()
+
+    test_df = df_imdb[25000:]
+    test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
+
+    def making_dataset(data_df):
+        x_train = data_df['original_text'].values
+        x_train = t.texts_to_sequences(x_train)
+        x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
+        y_train = data_df['original_label'].values
+        y_train = to_categorical(np.asarray(y_train))
+
+        return x_train, y_train
+
+    x_train, y_train = making_dataset(original_train_data)
+    x_test, y_test = making_dataset(test_df)
+    x_val, y_val = making_dataset(val_df)
+
+    print('X_train size:', x_train.shape)
+    print('y_train size:', y_train.shape)
+    print('X_test size:', x_test.shape)
+    print('y_test size:', y_test.shape)
+    print('X_val size: ', x_val.shape)
+    print('y_val size: ', y_val.shape)
+
+    MODEL_NAME = 'TestGRU-epoch-10-emb-100'
+
+    use_early_stop = True
+    tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
+    checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
+
+    # def __init__(self, ...)에 나온 값들을 넣는다.
+    model_helper = ModelHelper(batch_size=batch_size, epochs=epochs,
+                               vocab_size=vocab_size,
+                               embedding_matrix=embedding_matrix,
+                               text_num=maxlen)
+
+    # def get_callback에 나온 값들을 넣는다.
+    model_helper.get_callback(use_early_stop=use_early_stop,
+                              tensorboard_log_dir=tensorboard_log_dir,
+                              checkpoint_path=checkpoint_path)
+
+    # def fit에 나온 값들을 넣는다. 본격적인 훈련 부분
+    model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
+
+    # 저장된 모델에 대해 테스트 진행.
+    model_helper = ModelHelper(batch_size=batch_size,
+                               epochs=epochs, vocab_size=vocab_size,
+                               embedding_matrix=embedding_matrix,
+                               text_num=maxlen)
+    model_helper.load_model(checkpoint_path=checkpoint_path)
+
+    # 위 metric에서 이 평가지표를 전부 넣었기 때문에 여기서 전부 출력.
+    loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
+
+    def result_preprocessing(result):
+        result = "{:5.2f}%".format(100 * result)
+        return result
+
+    loss = result_preprocessing(loss)
+    acc = result_preprocessing(acc)
+    recall = result_preprocessing(recall)
+    precision = result_preprocessing(precision)
+    F1_macro = result_preprocessing(F1_macro)
+    F1_micro = result_preprocessing(F1_micro)
+
+    print("Restored model, accuracy:", acc)
+    print("Restored model, recall:", recall)
+    print("Restored model, precision:", precision)
+    print("Restored model, f1_micro:", F1_micro)
+    print("Restored model, f1_macro:", F1_macro)
+
+    now = datetime.datetime.now()
+    csv_filename = r"D:\ruin\data\result\GRU_t5_base_imple.csv"
+    result_list = [now, numbers, acc, loss, recall, precision, F1_micro, F1_macro]
+
+    if os.path.isfile(csv_filename):
+        print("already csv file exist...")
+
+    else:
+        print("make new csv file...")
+        column_list = ['date', 'numbers', 'acc', 'loss', 'recall',
+                     'precision', 'F1_micro', 'F1_macro']
+        df_making = pd.DataFrame(columns=column_list)
+        df_making.to_csv(csv_filename, index=False)
+
+    f = open(csv_filename, 'a', newline='')
+    wr = csv.writer(f)
+    wr.writerow(result_list)
+    f.close()

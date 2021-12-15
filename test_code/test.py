@@ -1,12 +1,14 @@
-import tweepy
+import os
+import pandas as pd
 
-consumer_key = '3h7gTcpHsJqUVEpDfyiaFtk2c'
-consumer_secret = 'uBEcCZbwZecgnTVWEhAMw3EIdRxps8Zx5cHOOM2ldrG8R1txrT'
-access_token = '1059852994731106304-nZPxMcG0TbutEhfIFqeWdv4eVTrvLa'
-access_token_secret = 'Wd3X87eeF65SsetcWSHIEz22JorutzzWt4SyTzEUfsqaQ'
+test_list = ['date', 'numbers', 'acc', 'loss', 'recall',
+             'precision', 'F1_micro', 'F1_macro']
 
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+if os.path.isfile('test2.csv'):
+    print("Yes. it is a file")
 
-api = tweepy.API(auth)
-
+else:
+    test_list = ['date', 'numbers', 'acc', 'loss', 'recall',
+                 'precision', 'F1_micro', 'F1_macro']
+    df_making = pd.DataFrame(columns=test_list)
+    df_making.to_csv('test2.csv', index=False)
