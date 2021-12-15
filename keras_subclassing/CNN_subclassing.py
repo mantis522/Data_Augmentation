@@ -36,9 +36,9 @@ class MyModel(tf.keras.Model):
 model = MyModel(vocab_size)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
 es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
-mc = ModelCheckpoint('../model_implementation/CNN_model', monitor='val_acc', mode='max', verbose=1, save_best_only=True, format='tf')
+mc = ModelCheckpoint('../old_codes/CNN_model', monitor='val_acc', mode='max', verbose=1, save_best_only=True, format='tf')
 
 history = model.fit(X_train, y_train, epochs=20, validation_data=(X_test, y_test), callbacks=[es, mc])
 
-loaded_model = load_model('../model_implementation/CNN_model')
+loaded_model = load_model('../old_codes/CNN_model')
 print("\n 테스트 정확도: %.4f" % (loaded_model.evaluate(X_test, y_test)[1]))
