@@ -11,6 +11,9 @@ import os
 import datetime
 import csv
 
+# 기본 GRU 베이스로는 너무 정확도가 널뛰기함.
+# 최소 어텐션을 기준으로 잡자.
+
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
         super(MyModel, self).__init__()
@@ -152,10 +155,10 @@ if __name__ == '__main__':
 
     # original_imdb = df_imdb['original_text']
     # sum_imdb = df_imdb['summarized_text']
-    numbers = 1000
-    original_train_data = df_imdb[:numbers]
+    numbers = 15000
+    original_data = df_imdb[:numbers]
 
-    text_encoding = df_imdb['original_text']
+    text_encoding = original_data['original_text']
 
     t = Tokenizer()
     t.fit_on_texts(text_encoding)
@@ -175,7 +178,7 @@ if __name__ == '__main__':
 
     maxlen = text_num
     batch_size = 128
-    epochs = 2
+    epochs = 15
 
     def Glove_Embedding():
         embeddings_index = {}
@@ -200,7 +203,7 @@ if __name__ == '__main__':
 
     embedding_matrix = Glove_Embedding()
 
-    test_df = df_imdb[25000:]
+    train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
     test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
     def making_dataset(data_df):
@@ -212,7 +215,7 @@ if __name__ == '__main__':
 
         return x_train, y_train
 
-    x_train, y_train = making_dataset(original_train_data)
+    x_train, y_train = making_dataset(train_df)
     x_test, y_test = making_dataset(test_df)
     x_val, y_val = making_dataset(val_df)
 
@@ -242,6 +245,15 @@ if __name__ == '__main__':
 
     # def fit에 나온 값들을 넣는다. 본격적인 훈련 부분
     model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
+
+    result = model_helper.model.predict(x_test)
+
+    # model evaluate는 테스트 정확도를 얻을 때 사용.
+    test_score = model_helper.model.evaluate(x_test, y_test,
+                                             batch_size=batch_size)
+
+    print("test loss:", test_score[0], "test accuracy", test_score[1])
+    print('Restored Model...')
 
     # 저장된 모델에 대해 테스트 진행.
     model_helper = ModelHelper(batch_size=batch_size,
