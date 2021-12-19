@@ -15,7 +15,8 @@ import numpy as np
 import datetime
 import csv
 
-# 어텐션에 대한 클래스
+# 바다나우 어텐션 쓴 biGRU implementation
+
 class Attention(Layer):
     # use_bias는 불리언. 레이어가 편향 벡터를 만들어내는지의 여부
     # glorot 초기화는 Glorot(Xavier) 초기화라고 불리며 일반적인 NN 초기화 방식.
@@ -237,7 +238,16 @@ if __name__ == '__main__':
     numbers = 1000
     original_data = df_imdb[:numbers]
 
-    text_encoding = original_data['summarized_text']
+    # -----------------------------------
+
+    before_concat_origin = np.array(original_data['original_text'].tolist())
+    before_concat_origin = list(before_concat_origin)
+    before_concat_summ = np.array(original_data['summarized_text'].tolist())
+    before_concat_summ = list(before_concat_summ)
+
+    encoding_concat_list = before_concat_summ + before_concat_origin
+
+    text_encoding = encoding_concat_list
 
     t = Tokenizer()
     t.fit_on_texts(text_encoding)
@@ -257,6 +267,9 @@ if __name__ == '__main__':
     text_num = max_text()
 
     maxlen = text_num
+
+    # ---------------------------------------
+    # ------로 가둬둔 부분은 정수 인코딩을 위해 오리지널 + 요약문 더하고 인코딩한 부분.
 
     def Glove_Embedding():
         embeddings_index = {}
@@ -284,11 +297,39 @@ if __name__ == '__main__':
     train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
     test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
+    train_df = train_df.reset_index(drop=True)
+    test_df = test_df.reset_index(drop=True)
+    val_df = val_df.reset_index(drop=True)
+
+    def making_concat_train(data_df):
+        text_list = []
+        label_list = []
+        for i in range(len(data_df)):
+            original_label = int(data_df['original_label'][i])
+            huggingface_label = int(data_df['huggingface_sentiment'][i])
+            if original_label == huggingface_label:
+                text_list.append(data_df['summarized_text'][i])
+                label_list.append(huggingface_label)
+
+        return text_list, label_list
+
+    sumtext_list, sumlabel_list = making_concat_train(train_df)
+
+    def concat_df(data_df, text_list, label_list):
+        df = pd.DataFrame([x for x in zip(text_list, label_list)])
+        df.columns = ['original_text', 'original_label']
+        concating = pd.concat([data_df, df])
+        concating = concating.reset_index(drop=True)
+
+        return concating
+
+    train_df = concat_df(train_df, sumtext_list, sumlabel_list)
+
     def making_dataset(data_df):
-        x_train = data_df['summarized_text'].values
+        x_train = data_df['original_text'].values
         x_train = t.texts_to_sequences(x_train)
         x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
-        y_train = data_df['huggingface_sentiment'].values
+        y_train = data_df['original_label'].values
         y_train = to_categorical(np.asarray(y_train))
 
         return x_train, y_train
@@ -358,16 +399,20 @@ if __name__ == '__main__':
     print("Restored model, f1_macro:", F1_macro)
 
     now = datetime.datetime.now()
-    csv_filename = r"D:\ruin\data\result\Attention_biGRU_t5.csv"
-    result_list = [now, numbers, acc, loss, recall, precision, F1_micro, F1_macro]
+    csv_filename = r"D:\ruin\data\result\Aug_Attention_biGRU_t5_large.csv"
+    result_list = [now, numbers, len(train_df), acc, loss,
+                   recall, precision, F1_micro, F1_macro]
 
     if os.path.isfile(csv_filename):
         print("already csv file exist...")
 
     else:
         print("make new csv file...")
-        column_list = ['date', 'numbers', 'acc', 'loss', 'recall',
-                       'precision', 'F1_micro', 'F1_macro']
+        column_list = ['date', 'number of full data',
+                       'number of train data',
+                       'acc', 'loss', 'recall',
+                       'precision', 'F1_micro',
+                       'F1_macro']
         df_making = pd.DataFrame(columns=column_list)
         df_making.to_csv(csv_filename, index=False)
 
