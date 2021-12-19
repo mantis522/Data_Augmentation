@@ -187,7 +187,7 @@ class ModelHelper:
         callback_list = []
         if use_early_stop:
             # EarlyStopping
-            early_stopping = EarlyStopping(monitor='val_loss', patience=3, mode='min')
+            early_stopping = EarlyStopping(monitor='val_loss', patience=2, mode='min')
             callback_list.append(early_stopping)
         if checkpoint_path is not None:
             # save model
@@ -239,10 +239,10 @@ if __name__ == '__main__':
     imdb_csv = file_path
     df_imdb = pd.read_csv(imdb_csv)
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
-    df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
+    # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    numbers = 1000
-    original_data = df_imdb[:numbers]
+    numbers = 5000
+    original_data = df_imdb[48000:50000]
 
     text_encoding = original_data['original_text']
     t = Tokenizer()
@@ -308,7 +308,7 @@ if __name__ == '__main__':
     print('y_val size: ', y_val.shape)
 
     use_early_stop = True
-    MODEL_NAME = 'TextBiRNNAtt-epoch-10-emb-100'
+    MODEL_NAME = 'Normal_attention-epoch-15-emb-100'
 
     tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
     checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
@@ -324,6 +324,14 @@ if __name__ == '__main__':
     model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
                               checkpoint_path=checkpoint_path)
     model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
+
+    result = model_helper.model.predict(x_test)
+
+    # model evaluate는 테스트 정확도를 얻을 때 사용.
+    test_score = model_helper.model.evaluate(x_test, y_test,
+                                             batch_size=batch_size)
+
+    print("test loss:", test_score[0], "test accuracy", test_score[1])
 
     print('Restored Model...')
     model_helper = ModelHelper(class_num=class_num,
@@ -357,7 +365,7 @@ if __name__ == '__main__':
 
     now = datetime.datetime.now()
     csv_filename = r"D:\ruin\data\result\Normal_Attention_biGRU_t5_large.csv"
-    result_list = [now, numbers, len(train_df), acc, loss,
+    result_list = [now, len(original_data), len(train_df), acc, loss,
                    recall, precision, F1_micro, F1_macro]
 
     if os.path.isfile(csv_filename):
