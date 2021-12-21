@@ -55,11 +55,11 @@ class making_label:
         print("time :", time.time() - start)
 
 t5_base_dir = r"D:\ruin\data\imdb_summarization\imdb_t5_base_sum.csv"
-t5_large_dir = r"D:\ruin\data\imdb_summarization\imdb_t5_large_sum.csv"
+# t5_large_dir = r"D:\ruin\data\imdb_summarization\imdb_t5_large_sum.csv"
 
 t5_base_output = r"D:\ruin\data\imdb_summarization\t5_base_with_huggingface_sentiment.csv"
-t5_large_output = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
+# t5_large_output = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
 
 t5 = making_label(0)
 t5.make(t5_base_dir, t5_base_output)
-t5.make(t5_large_dir, t5_large_output)
+# t5.make(t5_large_dir, t5_large_output)

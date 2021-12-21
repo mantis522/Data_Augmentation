@@ -7,6 +7,7 @@ import torch
 start = time.time()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 
 imdb_data = r"D:\ruin\data\IMDB Dataset2.csv"
 df_imdb = pd.read_csv(imdb_data)
@@ -51,6 +52,6 @@ for i in range(len(text_list)):
 dict_df = {'original_text': text_list, 'original_label': label_list, 't5-large_text': summarized_list}
 dict_df = pd.DataFrame(dict_df)
 
-dict_df.to_csv("imdb_t5_base_sum.csv")
+dict_df.to_csv(r"D:\ruin\data\imdb_summarization\imdb_t5_base_sum.csv")
 
 print("time :", time.time() - start)
