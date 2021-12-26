@@ -236,7 +236,7 @@ if __name__ == '__main__':
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
     numbers = 5000
-    original_data = df_imdb[48000:50000]
+    original_data = df_imdb[26000:28000]
 
     # -----------------------------------
 
