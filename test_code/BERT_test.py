@@ -93,10 +93,10 @@ def convert_data_to_examples(train, test, DATA_COLUMN, LABEL_COLUMN):
 
     return train_InputExamples, validation_InputExamples
 
-    train_InputExamples, validation_InputExamples = convert_data_to_examples(train,
-                                                                             test,
-                                                                             'DATA_COLUMN',
-                                                                             'LABEL_COLUMN')
+    # train_InputExamples, validation_InputExamples = convert_data_to_examples(train,
+    #                                                                          test,
+    #                                                                          'DATA_COLUMN',
+    #                                                                          'LABEL_COLUMN')
 
 
 def convert_examples_to_tf_dataset(examples, tokenizer, max_length=128):
@@ -159,6 +159,9 @@ train_data = train_data.shuffle(100).batch(32).repeat(2)
 
 validation_data = convert_examples_to_tf_dataset(list(validation_InputExamples), tokenizer)
 validation_data = validation_data.batch(32)
+
+print(train_data)
+print(validation_data)
 
 # def config_train_model():
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08, clipnorm=1.0),

@@ -4,62 +4,42 @@ import shutil
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text as text
-from official.nlp import optimization  # to create AdamW optimizer
+from official.nlp import optimization
 
-import matplotlib.pyplot as plt
+# file_path = r"D:\ruin\data\IMDB Dataset2.csv"
+# imdb_csv = file_path
+# df_imdb = pd.read_csv(imdb_csv)
+# df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
+#
+# y = np.int32(df_imdb.label.astype('category').cat.codes.to_numpy())
+# num_classes = np.unique(y).shape[0]
+#
+# max_features = 10000
+# output_dim = 16
+#
+# results = Counter()
+# df_imdb['text'].str.split().apply(results.update)
+# vocabulary = [key[0] for key in results.most_common(max_features)]
+#
+# tokenizer = Tokenizer(num_words=max_features)
+# tokenizer.fit_on_texts(vocabulary)
+#
+# X = tokenizer.texts_to_sequences(df_imdb['text'].values)
+# X = pad_sequences(X)
+#
+# max_input_lenght = X.shape[1]
+#
+# x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+# x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.2, random_state=0)
+#
+# print('X_train size:', x_train.shape)
+# print('y_train size:', y_train.shape)
+# print('X_test size:', x_test.shape)
+# print('y_test size:', y_test.shape)
+# print('X_val size: ', x_val.shape)
+# print('y_val size: ', y_val.shape)
 
-tf.get_logger().setLevel('ERROR')
-
-url = 'https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz'
-
-dataset = tf.keras.utils.get_file('aclImdb_v1.tar.gz', url,
-                                  untar=True, cache_dir='.',
-                                  cache_subdir='')
-
-dataset_dir = os.path.join(os.path.dirname(dataset), 'aclImdb')
-
-train_dir = os.path.join(dataset_dir, 'train')
-
-# remove unused folders to make it easier to load the data
-remove_dir = os.path.join(train_dir, 'unsup')
-shutil.rmtree(remove_dir)
-
-AUTOTUNE = tf.data.AUTOTUNE
-batch_size = 32
-seed = 42
-
-raw_train_ds = tf.keras.utils.text_dataset_from_directory(
-    'aclImdb/train',
-    batch_size=batch_size,
-    validation_split=0.2,
-    subset='training',
-    seed=seed)
-
-print(type(raw_train_ds))
-
-class_names = raw_train_ds.class_names
-train_ds = raw_train_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-val_ds = tf.keras.utils.text_dataset_from_directory(
-    'aclImdb/train',
-    batch_size=batch_size,
-    validation_split=0.2,
-    subset='validation',
-    seed=seed)
-
-val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-test_ds = tf.keras.utils.text_dataset_from_directory(
-    'aclImdb/test',
-    batch_size=batch_size)
-
-test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
-
-for text_batch, label_batch in train_ds.take(1):
-  for i in range(3):
-    print(f'Review: {text_batch.numpy()[i]}')
-    label = label_batch.numpy()[i]
-    print(f'Label : {label} ({class_names[label]})')
+#@title Choose a BERT model to fine-tune
 
 bert_model_name = 'small_bert/bert_en_uncased_L-4_H-512_A-8'  #@param ["bert_en_uncased_L-12_H-768_A-12", "bert_en_cased_L-12_H-768_A-12", "bert_multi_cased_L-12_H-768_A-12", "small_bert/bert_en_uncased_L-2_H-128_A-2", "small_bert/bert_en_uncased_L-2_H-256_A-4", "small_bert/bert_en_uncased_L-2_H-512_A-8", "small_bert/bert_en_uncased_L-2_H-768_A-12", "small_bert/bert_en_uncased_L-4_H-128_A-2", "small_bert/bert_en_uncased_L-4_H-256_A-4", "small_bert/bert_en_uncased_L-4_H-512_A-8", "small_bert/bert_en_uncased_L-4_H-768_A-12", "small_bert/bert_en_uncased_L-6_H-128_A-2", "small_bert/bert_en_uncased_L-6_H-256_A-4", "small_bert/bert_en_uncased_L-6_H-512_A-8", "small_bert/bert_en_uncased_L-6_H-768_A-12", "small_bert/bert_en_uncased_L-8_H-128_A-2", "small_bert/bert_en_uncased_L-8_H-256_A-4", "small_bert/bert_en_uncased_L-8_H-512_A-8", "small_bert/bert_en_uncased_L-8_H-768_A-12", "small_bert/bert_en_uncased_L-10_H-128_A-2", "small_bert/bert_en_uncased_L-10_H-256_A-4", "small_bert/bert_en_uncased_L-10_H-512_A-8", "small_bert/bert_en_uncased_L-10_H-768_A-12", "small_bert/bert_en_uncased_L-12_H-128_A-2", "small_bert/bert_en_uncased_L-12_H-256_A-4", "small_bert/bert_en_uncased_L-12_H-512_A-8", "small_bert/bert_en_uncased_L-12_H-768_A-12", "albert_en_base", "electra_small", "electra_base", "experts_pubmed", "experts_wiki_books", "talking-heads_base"]
 
@@ -206,3 +186,14 @@ tfhub_handle_preprocess = map_model_to_preprocess[bert_model_name]
 
 print(f'BERT model selected           : {tfhub_handle_encoder}')
 print(f'Preprocess model auto-selected: {tfhub_handle_preprocess}')
+
+bert_preprocess_model = hub.KerasLayer(tfhub_handle_preprocess)
+
+text_test = ['this is such an amazing movie!']
+text_preprocessed = bert_preprocess_model(text_test)
+
+print(f'Keys       : {list(text_preprocessed.keys())}')
+print(f'Shape      : {text_preprocessed["input_word_ids"].shape}')
+print(f'Word Ids   : {text_preprocessed["input_word_ids"][0, :12]}')
+print(f'Input Mask : {text_preprocessed["input_mask"][0, :12]}')
+print(f'Type Ids   : {text_preprocessed["input_type_ids"][0, :12]}')
