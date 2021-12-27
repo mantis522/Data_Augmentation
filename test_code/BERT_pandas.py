@@ -12,6 +12,8 @@ from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoi
 import tensorflow_addons as tfa
 import os
 
+# https://stackoverflow.com/questions/69723765/create-a-tensorflow-dataset-from-a-pandas-data-frame-with-numerous-labels
+
 file_path = r"D:\ruin\data\IMDB Dataset2.csv"
 
 imdb_csv = file_path
