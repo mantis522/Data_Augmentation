@@ -7,6 +7,7 @@ import tensorflow as tf
 # 계속 BERT_IMDB_imple과 비슷한데 어디가 다른지 비교.
 # model.fit 부분이 다른데 BERT_IMDB_imple은 배치사이즈 명시를 안해서 그런가
 # BERT_IMDB_imple은 정상적으로 돌아가는데 여기는 OOM이 뜸
+# 배치사이즈 명시해도 OOM이 안뜨네... 왜 안됐지?
 
 model = TFBertForSequenceClassification.from_pretrained("bert-base-uncased")
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")

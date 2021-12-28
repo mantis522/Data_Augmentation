@@ -113,4 +113,5 @@ model.fit(
     steps_per_epoch = len(train)//32,
     epochs=3,
     validation_data=validation_data,
-    validation_steps = len(test)//32)
+    validation_steps = len(test)//32,
+    batch_size=32)
