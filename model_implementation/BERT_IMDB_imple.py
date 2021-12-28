@@ -1,10 +1,14 @@
+import tensorflow as tf
+import pandas as pd
 from transformers import BertTokenizer, TFBertForSequenceClassification
 from transformers import InputExample, InputFeatures
-import pandas as pd
 from sklearn.model_selection import train_test_split
-import tensorflow as tf
 
-# 계속 OOM
+# 이쪽이 제대로 돌아감.
+# 다만 일반적인 모델이라고 하기는 힘들지도?
+# 제대로 된 모델은 BERT_korean_CLS를 참조.
+# 다만 BERT_korean_CLS은 배치사이즈를 엄청 줄이거나, 시퀀스길이를 줄여야해서 비추함.
+
 
 model = TFBertForSequenceClassification.from_pretrained("bert-base-uncased")
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -15,8 +19,8 @@ imdb_csv = file_path
 df_imdb = pd.read_csv(imdb_csv)
 df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
-train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
-test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
+train, test = train_test_split(df_imdb, test_size=0.2, random_state=0)
+test, val = train_test_split(test, test_size=0.5, random_state=0)
 
 
 def convert_data_to_examples(train, test, DATA_COLUMN, LABEL_COLUMN):
@@ -36,8 +40,8 @@ def convert_data_to_examples(train, test, DATA_COLUMN, LABEL_COLUMN):
 
     train_InputExamples, validation_InputExamples = convert_data_to_examples(train,
                                                                              test,
-                                                                             'text',
-                                                                             'label')
+                                                                             'DATA_COLUMN',
+                                                                             'LABEL_COLUMN')
 
 
 def convert_examples_to_tf_dataset(examples, tokenizer, max_length=128):
@@ -88,20 +92,25 @@ def convert_examples_to_tf_dataset(examples, tokenizer, max_length=128):
         ),
     )
 
-
+# This will take a while (approx. 2 minutes)
 DATA_COLUMN = 'text'
 LABEL_COLUMN = 'label'
 
-train_InputExamples, validation_InputExamples = convert_data_to_examples(train_df, test_df, DATA_COLUMN, LABEL_COLUMN)
+train_InputExamples, validation_InputExamples = convert_data_to_examples(train, test, DATA_COLUMN, LABEL_COLUMN)
 
-train_data = convert_examples_to_tf_dataset(list(train_InputExamples), tokenizer)
+train_data = convert_examples_to_tf_dataset(list(train_InputExamples), tokenizer, max_length=64)
 train_data = train_data.shuffle(100).batch(32).repeat(2)
 
-validation_data = convert_examples_to_tf_dataset(list(validation_InputExamples), tokenizer)
+validation_data = convert_examples_to_tf_dataset(list(validation_InputExamples), tokenizer, max_length=64)
 validation_data = validation_data.batch(32)
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08, clipnorm=1.0),
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=[tf.keras.metrics.SparseCategoricalAccuracy('accuracy')])
 
-model.fit(train_data, epochs=2, validation_data=validation_data, batch_size=32, verbose=1)
+model.fit(
+    train_data,
+    steps_per_epoch = len(train)//32,
+    epochs=3,
+    validation_data=validation_data,
+    validation_steps = len(test)//32)

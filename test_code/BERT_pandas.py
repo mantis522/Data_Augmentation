@@ -23,13 +23,17 @@ df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
 test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
-def df_to_dataset(dataframe, batch_size=128):
+train_df = train_df[:3000]
+test_df = test_df[:500]
+val_df = val_df[:500]
+
+def df_to_dataset(dataframe, batch_size):
     labels = tf.squeeze(tf.constant([dataframe.pop('label')]), axis=0)
     ds = tf.data.Dataset.from_tensor_slices((dataframe, labels)).batch(
         batch_size)
     return ds
 
-batch_size = 128
+batch_size = 256
 AUTOTUNE = tf.data.AUTOTUNE
 
 train_ds = df_to_dataset(train_df, batch_size=batch_size)

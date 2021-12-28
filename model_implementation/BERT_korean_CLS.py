@@ -15,9 +15,9 @@ NUM_EPOCHS = 3
 VALID_SPLIT = 0.2
 MAX_LEN = 39 # EDA에서 추출된 Max Length
 DATA_IN_PATH = r"D:\ruin\data\tensorflow-ml-nlp-tf2-master\7.PRETRAIN_METHOD\data_in\KOR"
-DATA_OUT_PATH = "data_out/KOR"
+DATA_OUT_PATH = "../test_code/data_out/KOR"
 
-tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased", cache_dir='bert_ckpt', do_lower_case=False)
+tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased", cache_dir='../test_code/bert_ckpt', do_lower_case=False)
 
 test_sentence = "안녕하세요, 반갑습니다."
 
@@ -140,7 +140,7 @@ class TFBertClassifier(tf.keras.Model):
         return logits
 
 cls_model = TFBertClassifier(model_name='bert-base-multilingual-cased',
-                             dir_path='bert_ckpt',
+                             dir_path='../test_code/bert_ckpt',
                              num_class=2)
 
 # 학습 준비하기
