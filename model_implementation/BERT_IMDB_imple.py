@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 # 다만 일반적인 모델이라고 하기는 힘들지도?
 # 제대로 된 모델은 BERT_korean_CLS를 참조.
 # 다만 BERT_korean_CLS은 배치사이즈를 엄청 줄이거나, 시퀀스길이를 줄여야해서 비추함.
+# 코드 다시 보니까 이쪽도 시퀀스 길이를 극단적으로 줄여서 제대로 돌아가는거였음...
 
 
 model = TFBertForSequenceClassification.from_pretrained("bert-base-uncased")
