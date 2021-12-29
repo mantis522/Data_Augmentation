@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
 
     slow_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    save_path = "../test_code/bert_base_uncased/"
+    save_path = "../keras_restart/bert_base_uncased/"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     slow_tokenizer.save_pretrained(save_path)
