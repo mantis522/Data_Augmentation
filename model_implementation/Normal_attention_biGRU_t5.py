@@ -241,7 +241,6 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    numbers = 5000
     original_data = df_imdb[26000:28000]
 
     text_encoding = original_data['original_text']
