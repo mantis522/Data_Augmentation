@@ -127,7 +127,8 @@ if __name__ == '__main__':
     imdb_df = pd.read_csv(file_path)
     df_imdb = imdb_df.drop(['Unnamed: 0'], axis=1)
 
-    original_data = df_imdb[26000:27000]
+    original_data = df_imdb[30000:30500]
+    # original_data = df_imdb
 
     train_df, test_df = train_test_split(original_data, test_size=0.2, random_state=0)
     test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
