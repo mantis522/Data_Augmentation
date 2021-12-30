@@ -127,7 +127,10 @@ if __name__ == '__main__':
     imdb_df = pd.read_csv(file_path)
     df_imdb = imdb_df.drop(['Unnamed: 0'], axis=1)
 
-    original_data = df_imdb[30000:30500]
+    start = 30000
+    end = 30500
+
+    original_data = df_imdb[start:end]
     # original_data = df_imdb
 
     train_df, test_df = train_test_split(original_data, test_size=0.2, random_state=0)
@@ -281,7 +284,7 @@ if __name__ == '__main__':
 
     now = datetime.datetime.now()
     csv_filename = r"D:\ruin\data\result\NORMAL_BERT_IMDB_t5_large.csv"
-    result_list = [now, len(original_data), len(train_df), acc, loss,
+    result_list = [now, len(original_data), len(train_df), start, end, acc, loss,
                    recall, precision, F1_micro, F1_macro]
 
     if os.path.isfile(csv_filename):
@@ -291,6 +294,7 @@ if __name__ == '__main__':
         print("make new csv file...")
         column_list = ['date', 'number of full data',
                        'number of train data',
+                       'start', 'end',
                        'acc', 'loss', 'recall',
                        'precision', 'F1_micro',
                        'F1_macro']

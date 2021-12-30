@@ -235,8 +235,10 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    numbers = 5000
-    original_data = df_imdb[26000:28000]
+    start = 30000
+    end = 30500
+
+    original_data = df_imdb[start:end]
 
     # -----------------------------------
 
@@ -408,7 +410,7 @@ if __name__ == '__main__':
 
     now = datetime.datetime.now()
     csv_filename = r"D:\ruin\data\result\Aug_Attention_biGRU_t5_large.csv"
-    result_list = [now, len(original_data), len(train_df), acc, loss,
+    result_list = [now, len(original_data), len(train_df), start, end, acc, loss,
                    recall, precision, F1_micro, F1_macro]
 
     if os.path.isfile(csv_filename):
@@ -418,6 +420,7 @@ if __name__ == '__main__':
         print("make new csv file...")
         column_list = ['date', 'number of full data',
                        'number of train data',
+                       'start', 'end',
                        'acc', 'loss', 'recall',
                        'precision', 'F1_micro',
                        'F1_macro']
