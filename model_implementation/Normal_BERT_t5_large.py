@@ -127,8 +127,8 @@ if __name__ == '__main__':
     imdb_df = pd.read_csv(file_path)
     df_imdb = imdb_df.drop(['Unnamed: 0'], axis=1)
 
-    start = 30000
-    end = 30500
+    start = 0
+    end = 25000
 
     original_data = df_imdb[start:end]
     # original_data = df_imdb
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     train_df, test_df = train_test_split(original_data, test_size=0.2, random_state=0)
     test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
-    maxlen = 300
+    maxlen = 280
     class_num = 2
     epochs = 8
     batch_size = 8

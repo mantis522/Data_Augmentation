@@ -127,8 +127,8 @@ if __name__ == '__main__':
     df_imdb = pd.read_csv(file_path)
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
-    start = 30000
-    end = 30500
+    start = 0
+    end = 25000
 
     original_data = df_imdb[start:end]
     # original_data = df_imdb
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     train_df = concat_df(train_df, sumtext_list, sumlabel_list)
 
-    maxlen = 300
+    maxlen = 280
     class_num = 2
     epochs = 8
     batch_size = 8
