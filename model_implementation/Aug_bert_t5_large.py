@@ -128,7 +128,7 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
     start = 0
-    end = 25000
+    end = 8000
 
     original_data = df_imdb[start:end]
     # original_data = df_imdb
