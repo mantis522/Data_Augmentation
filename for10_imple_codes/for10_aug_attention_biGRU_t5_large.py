@@ -235,8 +235,8 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 21000
-    end = 26000
+    start = 45000
+    end = 50000
 
     original_data = df_imdb[start:end]
 
@@ -347,7 +347,11 @@ if __name__ == '__main__':
     print('X_val size: ', x_val.shape)
     print('y_val size: ', y_val.shape)
 
-    for i in range(10):
+    avg_list = []
+
+    numbers_of_times = 10
+
+    for i in range(numbers_of_times):
         print(i+1, "번째 학습 시작.")
         use_early_stop = True
         MODEL_NAME = 'Aug_attention-epoch-15-emb-100'
@@ -393,6 +397,7 @@ if __name__ == '__main__':
 
         loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
 
+        avg_list.append(float(acc))
 
         def result_preprocessing(result):
             result = "{:5.2f}%".format(100 * result)
@@ -440,4 +445,11 @@ if __name__ == '__main__':
         except PermissionError:
             print("지금 보고 있는 엑셀창을 닫아주세요.")
 
+
+
         print(i+1, "번째 학습 끝")
+
+    avg_result = sum(avg_list)
+    avg_result = float(avg_result) / float(numbers_of_times)
+
+    print("{:5.2f}%".format(100 * avg_result))
