@@ -241,8 +241,8 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 45000
-    end = 50000
+    start = 0
+    end = 2000
 
     original_data = df_imdb[start:end]
 
@@ -355,6 +355,9 @@ if __name__ == '__main__':
         loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
         avg_list.append(float(acc))
 
+        avg_sum = sum(avg_list)
+        average_acc = float(avg_sum) / float(i+1)
+
         def result_preprocessing(result):
             result = "{:5.2f}%".format(100 * result)
             return result
@@ -366,29 +369,31 @@ if __name__ == '__main__':
         precision = result_preprocessing(precision)
         F1_macro = result_preprocessing(F1_macro)
         F1_micro = result_preprocessing(F1_micro)
+        average_acc = result_preprocessing(average_acc)
 
         print("Restored model, accuracy:", acc)
         print("Restored model, recall:", recall)
         print("Restored model, precision:", precision)
         print("Restored model, f1_micro:", F1_micro)
         print("Restored model, f1_macro:", F1_macro)
+        print("Average accuracy:", average_acc)
 
         now = datetime.datetime.now()
         csv_filename = r"D:\ruin\data\result\B_Attention\Normal_Attention_biGRU_t5_large.csv"
-        result_list = [now, len(original_data), len(train_df), start, end, acc, loss,
-                       recall, precision, F1_micro, F1_macro]
+        result_list = [now, i+1, len(original_data), len(train_df), start, end, acc, loss,
+                       recall, precision, F1_micro, F1_macro, average_acc]
 
         if os.path.isfile(csv_filename):
             print("already csv file exist...")
 
         else:
             print("make new csv file...")
-            column_list = ['date', 'number of full data',
+            column_list = ['date', 'numbers', 'number of full data',
                            'number of train data',
                            'start', 'end',
                            'acc', 'loss', 'recall',
                            'precision', 'F1_micro',
-                           'F1_macro']
+                           'F1_macro', 'average_acc']
             df_making = pd.DataFrame(columns=column_list)
             df_making.to_csv(csv_filename, index=False)
 
@@ -404,8 +409,3 @@ if __name__ == '__main__':
 
 
         print(i+1, "번째 학습 끝")
-
-    avg_result = sum(avg_list)
-    avg_result = float(avg_result) / float(numbers_of_times)
-
-    print("{:5.2f}%".format(100 * avg_result))
