@@ -241,8 +241,8 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 2000
-    end = 6000
+    start = 21000
+    end = 26000
 
     original_data = df_imdb[start:end]
 
@@ -309,87 +309,93 @@ if __name__ == '__main__':
     print('X_val size: ', x_val.shape)
     print('y_val size: ', y_val.shape)
 
-    use_early_stop = True
-    MODEL_NAME = 'Normal_attention-epoch-15-emb-100'
 
-    tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
-    checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
+    for i in range(10):
+        print(i+1, "번째 학습 시작.")
+        use_early_stop = True
+        MODEL_NAME = 'Normal_attention-epoch-15-emb-100'
 
-    model_helper = ModelHelper(class_num=class_num,
-                               maxlen=maxlen,
-                               max_features=max_features,
-                               embedding_dims=embedding_dims,
-                               epochs=epochs,
-                               batch_size=batch_size
-                               )
+        tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
+        checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
 
-    model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
-                              checkpoint_path=checkpoint_path)
-    model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
+        model_helper = ModelHelper(class_num=class_num,
+                                   maxlen=maxlen,
+                                   max_features=max_features,
+                                   embedding_dims=embedding_dims,
+                                   epochs=epochs,
+                                   batch_size=batch_size
+                                   )
 
-    result = model_helper.model.predict(x_test)
+        model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
+                                  checkpoint_path=checkpoint_path)
+        model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
 
-    # model evaluate는 테스트 정확도를 얻을 때 사용.
-    test_score = model_helper.model.evaluate(x_test, y_test,
-                                             batch_size=batch_size)
+        result = model_helper.model.predict(x_test)
 
-    print("test loss:", test_score[0], "test accuracy", test_score[1])
+        # model evaluate는 테스트 정확도를 얻을 때 사용.
+        test_score = model_helper.model.evaluate(x_test, y_test,
+                                                 batch_size=batch_size)
 
-    print('Restored Model...')
-    model_helper = ModelHelper(class_num=class_num,
-                               maxlen=maxlen,
-                               max_features=max_features,
-                               embedding_dims=embedding_dims,
-                               epochs=epochs,
-                               batch_size=batch_size
-                               )
+        print("test loss:", test_score[0], "test accuracy", test_score[1])
 
-    model_helper.load_model(checkpoint_path=checkpoint_path)
+        print('Restored Model...')
+        model_helper = ModelHelper(class_num=class_num,
+                                   maxlen=maxlen,
+                                   max_features=max_features,
+                                   embedding_dims=embedding_dims,
+                                   epochs=epochs,
+                                   batch_size=batch_size
+                                   )
 
-    loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
+        model_helper.load_model(checkpoint_path=checkpoint_path)
 
-    def result_preprocessing(result):
-        result = "{:5.2f}%".format(100 * result)
-        return result
-
-    loss = result_preprocessing(loss)
-    acc = result_preprocessing(acc)
-    recall = result_preprocessing(recall)
-    precision = result_preprocessing(precision)
-    F1_macro = result_preprocessing(F1_macro)
-    F1_micro = result_preprocessing(F1_micro)
-
-    print("Restored model, accuracy:", acc)
-    print("Restored model, recall:", recall)
-    print("Restored model, precision:", precision)
-    print("Restored model, f1_micro:", F1_micro)
-    print("Restored model, f1_macro:", F1_macro)
-
-    now = datetime.datetime.now()
-    csv_filename = r"D:\ruin\data\result\Normal_Attention_biGRU_t5_large.csv"
-    result_list = [now, len(original_data), len(train_df), start, end, acc, loss,
-                   recall, precision, F1_micro, F1_macro]
-
-    if os.path.isfile(csv_filename):
-        print("already csv file exist...")
-
-    else:
-        print("make new csv file...")
-        column_list = ['date', 'number of full data',
-                       'number of train data',
-                       'start', 'end',
-                       'acc', 'loss', 'recall',
-                       'precision', 'F1_micro',
-                       'F1_macro']
-        df_making = pd.DataFrame(columns=column_list)
-        df_making.to_csv(csv_filename, index=False)
+        loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
 
 
-    try:
-        f = open(csv_filename, 'a', newline='')
-        wr = csv.writer(f)
-        wr.writerow(result_list)
-        f.close()
+        def result_preprocessing(result):
+            result = "{:5.2f}%".format(100 * result)
+            return result
 
-    except PermissionError:
-        print("지금 보고 있는 엑셀창을 닫아주세요.")
+
+        loss = result_preprocessing(loss)
+        acc = result_preprocessing(acc)
+        recall = result_preprocessing(recall)
+        precision = result_preprocessing(precision)
+        F1_macro = result_preprocessing(F1_macro)
+        F1_micro = result_preprocessing(F1_micro)
+
+        print("Restored model, accuracy:", acc)
+        print("Restored model, recall:", recall)
+        print("Restored model, precision:", precision)
+        print("Restored model, f1_micro:", F1_micro)
+        print("Restored model, f1_macro:", F1_macro)
+
+        now = datetime.datetime.now()
+        csv_filename = r"D:\ruin\data\result\B_Attention\Normal_Attention_biGRU_t5_large.csv"
+        result_list = [now, len(original_data), len(train_df), start, end, acc, loss,
+                       recall, precision, F1_micro, F1_macro]
+
+        if os.path.isfile(csv_filename):
+            print("already csv file exist...")
+
+        else:
+            print("make new csv file...")
+            column_list = ['date', 'number of full data',
+                           'number of train data',
+                           'start', 'end',
+                           'acc', 'loss', 'recall',
+                           'precision', 'F1_micro',
+                           'F1_macro']
+            df_making = pd.DataFrame(columns=column_list)
+            df_making.to_csv(csv_filename, index=False)
+
+        try:
+            f = open(csv_filename, 'a', newline='')
+            wr = csv.writer(f)
+            wr.writerow(result_list)
+            f.close()
+
+        except PermissionError:
+            print("지금 보고 있는 엑셀창을 닫아주세요.")
+
+        print(i+1, "번째 학습 끝")

@@ -235,8 +235,8 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 30000
-    end = 30500
+    start = 2000
+    end = 6000
 
     original_data = df_imdb[start:end]
 
