@@ -244,7 +244,8 @@ if __name__ == '__main__':
     start = 26000
     end = 27000
 
-    while end < 50000:
+    while start < 50000:
+        print("present :", start)
 
         original_data = df_imdb[start:end]
 
@@ -416,6 +417,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-            start = start + 1000
-            end = end + 1000
+        start = start + 1000
+        end = end + 1000
 
