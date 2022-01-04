@@ -188,7 +188,7 @@ class ModelHelper:
         callback_list = []
         if use_early_stop:
             # EarlyStopping
-            early_stopping = EarlyStopping(monitor='val_loss', patience=2, mode='min')
+            early_stopping = EarlyStopping(monitor='val_loss', patience=3, mode='min')
             callback_list.append(early_stopping)
         if checkpoint_path is not None:
             # save model
@@ -235,221 +235,236 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 1000
-    end = 2000
+    start = 26000
+    end = 27000
 
-    original_data = df_imdb[start:end]
+    while end < 50000:
 
-    # -----------------------------------
-
-    before_concat_origin = np.array(original_data['original_text'].tolist())
-    before_concat_origin = list(before_concat_origin)
-    before_concat_summ = np.array(original_data['summarized_text'].tolist())
-    before_concat_summ = list(before_concat_summ)
-
-    encoding_concat_list = before_concat_summ + before_concat_origin
-
-    text_encoding = encoding_concat_list
-
-    t = Tokenizer()
-    t.fit_on_texts(text_encoding)
-
-    vocab_size = len(t.word_index) + 1
-
-    sequences = t.texts_to_sequences(text_encoding)
-
-    def max_text():
-        for i in range(1, len(sequences)):
-            max_length = len(sequences[0])
-            if len(sequences[i]) > max_length:
-                max_length = len(sequences[i])
-        return max_length
+        original_data = df_imdb[start:end]
 
 
-    text_num = max_text()
+        # -----------------------------------
 
-    maxlen = text_num
+        before_concat_origin = np.array(original_data['original_text'].tolist())
+        before_concat_origin = list(before_concat_origin)
+        before_concat_summ = np.array(original_data['summarized_text'].tolist())
+        before_concat_summ = list(before_concat_summ)
 
-    # ---------------------------------------
-    # ------로 가둬둔 부분은 정수 인코딩을 위해 오리지널 + 요약문 더하고 인코딩한 부분.
+        encoding_concat_list = before_concat_summ + before_concat_origin
 
-    def Glove_Embedding():
-        embeddings_index = {}
-        f = open(glove_path, encoding='utf-8')
-        for line in f:
-            values = line.split()
-            word = values[0]
-            coefs = np.asarray(values[1:], dtype='float32')
-            embeddings_index[word] = coefs
-        f.close()
+        text_encoding = encoding_concat_list
 
-        embedding_matrix = np.zeros((vocab_size, 100))
+        t = Tokenizer()
+        t.fit_on_texts(text_encoding)
 
-        # fill in matrix
-        for word, i in t.word_index.items():  # dictionary
-            embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
-            if embedding_vector is not None:
-                # add to matrix
-                embedding_matrix[i] = embedding_vector  # each row of matrix
+        vocab_size = len(t.word_index) + 1
 
-        return embedding_matrix
-
-    embedding_matrix = Glove_Embedding()
-
-    train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
-    test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
-
-    train_df = train_df.reset_index(drop=True)
-    test_df = test_df.reset_index(drop=True)
-    val_df = val_df.reset_index(drop=True)
-
-    def A2D_train(data_df):
-        text_list = []
-        label_list = []
-        for i in range(len(data_df)):
-            original_label = int(data_df['original_label'][i])
-            huggingface_label = int(data_df['huggingface_sentiment'][i])
-            if original_label == huggingface_label:
-                text_list.append(data_df['summarized_text'][i])
-                label_list.append(huggingface_label)
-
-        return text_list, label_list
-
-    sumtext_list, sumlabel_list = A2D_train(train_df)
-
-    def concat_df(data_df, text_list, label_list):
-        df = pd.DataFrame([x for x in zip(text_list, label_list)])
-        df.columns = ['original_text', 'original_label']
-        concating = pd.concat([data_df, df])
-        concating = concating.reset_index(drop=True)
-
-        return concating
-
-    train_df = concat_df(train_df, sumtext_list, sumlabel_list)
-
-    def making_dataset(data_df):
-        x_train = data_df['original_text'].values
-        x_train = t.texts_to_sequences(x_train)
-        x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
-        y_train = data_df['original_label'].values
-        y_train = to_categorical(np.asarray(y_train))
-
-        return x_train, y_train
-
-    x_train, y_train = making_dataset(train_df)
-    x_test, y_test = making_dataset(test_df)
-    x_val, y_val = making_dataset(val_df)
-
-    print('X_train size:', x_train.shape)
-    print('y_train size:', y_train.shape)
-    print('X_test size:', x_test.shape)
-    print('y_test size:', y_test.shape)
-    print('X_val size: ', x_val.shape)
-    print('y_val size: ', y_val.shape)
-
-    avg_list = []
-
-    numbers_of_times = 10
-
-    for i in range(numbers_of_times):
-        print(i+1, "번째 학습 시작.")
-        use_early_stop = True
-        MODEL_NAME = 'Aug_attention-epoch-15-emb-100'
-        tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
-        checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
-
-        class_num = 2
-        embedding_dims = 100
-        epochs = 15
-        batch_size = 256
-        max_features = 5000
-
-        model_helper = ModelHelper(class_num=class_num,
-                                   maxlen=maxlen,
-                                   max_features=max_features,
-                                   embedding_dims=embedding_dims,
-                                   epochs=epochs,
-                                   batch_size=batch_size
-                                   )
-
-        model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
-                                  checkpoint_path=checkpoint_path)
-        model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
-
-        result = model_helper.model.predict(x_test)
-
-        # model evaluate는 테스트 정확도를 얻을 때 사용.
-        test_score = model_helper.model.evaluate(x_test, y_test,
-                                                 batch_size=batch_size)
-
-        print("test loss:", test_score[0], "test accuracy", test_score[1])
-
-        print('Restored Model...')
-        model_helper = ModelHelper(class_num=class_num,
-                                   maxlen=maxlen,
-                                   max_features=max_features,
-                                   embedding_dims=embedding_dims,
-                                   epochs=epochs,
-                                   batch_size=batch_size
-                                   )
-
-        model_helper.load_model(checkpoint_path=checkpoint_path)
-
-        loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
-
-        avg_list.append(float(acc))
-
-        avg_sum = sum(avg_list)
-        average_acc = float(avg_sum) / float(i+1)
-
-        def result_preprocessing(result):
-            result = "{:5.2f}%".format(100 * result)
-            return result
+        sequences = t.texts_to_sequences(text_encoding)
 
 
-        loss = result_preprocessing(loss)
-        acc = result_preprocessing(acc)
-        recall = result_preprocessing(recall)
-        precision = result_preprocessing(precision)
-        F1_macro = result_preprocessing(F1_macro)
-        F1_micro = result_preprocessing(F1_micro)
-        average_acc = result_preprocessing(average_acc)
+        def max_text():
+            for i in range(1, len(sequences)):
+                max_length = len(sequences[0])
+                if len(sequences[i]) > max_length:
+                    max_length = len(sequences[i])
+            return max_length
 
-        print("Restored model, accuracy:", acc)
-        print("Restored model, recall:", recall)
-        print("Restored model, precision:", precision)
-        print("Restored model, f1_micro:", F1_micro)
-        print("Restored model, f1_macro:", F1_macro)
-        print("Average accuracy:", average_acc)
 
-        now = datetime.datetime.now()
-        csv_filename = r"result\B_Attention\Aug_Attention_biGRU_t5_large.csv"
-        result_list = [now, i+1, len(original_data), len(train_df), start, end, acc, loss,
-                       recall, precision, F1_micro, F1_macro, average_acc]
+        text_num = max_text()
 
-        if os.path.isfile(csv_filename):
-            print("already csv file exist...")
+        maxlen = text_num
 
-        else:
-            print("make new csv file...")
-            column_list = ['date', 'numbers', 'number of full data',
-                           'number of train data',
-                           'start', 'end',
-                           'acc', 'loss', 'recall',
-                           'precision', 'F1_micro',
-                           'F1_macro', 'average_acc']
-            df_making = pd.DataFrame(columns=column_list)
-            df_making.to_csv(csv_filename, index=False)
 
-        try:
-            f = open(csv_filename, 'a', newline='')
-            wr = csv.writer(f)
-            wr.writerow(result_list)
+        # ---------------------------------------
+        # ------로 가둬둔 부분은 정수 인코딩을 위해 오리지널 + 요약문 더하고 인코딩한 부분.
+
+        def Glove_Embedding():
+            embeddings_index = {}
+            f = open(glove_path, encoding='utf-8')
+            for line in f:
+                values = line.split()
+                word = values[0]
+                coefs = np.asarray(values[1:], dtype='float32')
+                embeddings_index[word] = coefs
             f.close()
 
-        except PermissionError:
-            print("지금 보고 있는 엑셀창을 닫아주세요.")
+            embedding_matrix = np.zeros((vocab_size, 100))
+
+            # fill in matrix
+            for word, i in t.word_index.items():  # dictionary
+                embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
+                if embedding_vector is not None:
+                    # add to matrix
+                    embedding_matrix[i] = embedding_vector  # each row of matrix
+
+            return embedding_matrix
 
 
+        embedding_matrix = Glove_Embedding()
 
-        print(i+1, "번째 학습 끝")
+        train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
+        test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
+
+        train_df = train_df.reset_index(drop=True)
+        test_df = test_df.reset_index(drop=True)
+        val_df = val_df.reset_index(drop=True)
+
+
+        def A2D_train(data_df):
+            text_list = []
+            label_list = []
+            for i in range(len(data_df)):
+                original_label = int(data_df['original_label'][i])
+                huggingface_label = int(data_df['huggingface_sentiment'][i])
+                if original_label == huggingface_label:
+                    text_list.append(data_df['summarized_text'][i])
+                    label_list.append(huggingface_label)
+
+            return text_list, label_list
+
+
+        sumtext_list, sumlabel_list = A2D_train(train_df)
+
+
+        def concat_df(data_df, text_list, label_list):
+            df = pd.DataFrame([x for x in zip(text_list, label_list)])
+            df.columns = ['original_text', 'original_label']
+            concating = pd.concat([data_df, df])
+            concating = concating.reset_index(drop=True)
+
+            return concating
+
+
+        train_df = concat_df(train_df, sumtext_list, sumlabel_list)
+
+
+        def making_dataset(data_df):
+            x_train = data_df['original_text'].values
+            x_train = t.texts_to_sequences(x_train)
+            x_train = sequence.pad_sequences(x_train, maxlen=maxlen, padding='post')
+            y_train = data_df['original_label'].values
+            y_train = to_categorical(np.asarray(y_train))
+
+            return x_train, y_train
+
+
+        x_train, y_train = making_dataset(train_df)
+        x_test, y_test = making_dataset(test_df)
+        x_val, y_val = making_dataset(val_df)
+
+        print('X_train size:', x_train.shape)
+        print('y_train size:', y_train.shape)
+        print('X_test size:', x_test.shape)
+        print('y_test size:', y_test.shape)
+        print('X_val size: ', x_val.shape)
+        print('y_val size: ', y_val.shape)
+
+        avg_list = []
+
+        numbers_of_times = 10
+
+        for i in range(numbers_of_times):
+            print(i + 1, "번째 학습 시작.")
+            use_early_stop = True
+            MODEL_NAME = 'Aug_attention-epoch-15-emb-100'
+            tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
+            checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
+
+            class_num = 2
+            embedding_dims = 100
+            epochs = 15
+            batch_size = 256
+            max_features = 5000
+
+            model_helper = ModelHelper(class_num=class_num,
+                                       maxlen=maxlen,
+                                       max_features=max_features,
+                                       embedding_dims=embedding_dims,
+                                       epochs=epochs,
+                                       batch_size=batch_size
+                                       )
+
+            model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
+                                      checkpoint_path=checkpoint_path)
+            model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
+
+            result = model_helper.model.predict(x_test)
+
+            # model evaluate는 테스트 정확도를 얻을 때 사용.
+            test_score = model_helper.model.evaluate(x_test, y_test,
+                                                     batch_size=batch_size)
+
+            print("test loss:", test_score[0], "test accuracy", test_score[1])
+
+            print('Restored Model...')
+            model_helper = ModelHelper(class_num=class_num,
+                                       maxlen=maxlen,
+                                       max_features=max_features,
+                                       embedding_dims=embedding_dims,
+                                       epochs=epochs,
+                                       batch_size=batch_size
+                                       )
+
+            model_helper.load_model(checkpoint_path=checkpoint_path)
+
+            loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
+
+            avg_list.append(float(acc))
+
+            avg_sum = sum(avg_list)
+            average_acc = float(avg_sum) / float(i + 1)
+
+
+            def result_preprocessing(result):
+                result = "{:5.2f}%".format(100 * result)
+                return result
+
+
+            loss = result_preprocessing(loss)
+            acc = result_preprocessing(acc)
+            recall = result_preprocessing(recall)
+            precision = result_preprocessing(precision)
+            F1_macro = result_preprocessing(F1_macro)
+            F1_micro = result_preprocessing(F1_micro)
+            average_acc = result_preprocessing(average_acc)
+
+            print("Restored model, accuracy:", acc)
+            print("Restored model, recall:", recall)
+            print("Restored model, precision:", precision)
+            print("Restored model, f1_micro:", F1_micro)
+            print("Restored model, f1_macro:", F1_macro)
+            print("Average accuracy:", average_acc)
+
+            now = datetime.datetime.now()
+            csv_filename = r"result\B_Attention\Aug_Attention_biGRU_t5_large.csv"
+            result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
+                           recall, precision, F1_micro, F1_macro, average_acc]
+
+            if os.path.isfile(csv_filename):
+                print("already csv file exist...")
+
+            else:
+                print("make new csv file...")
+                column_list = ['date', 'numbers', 'number of full data',
+                               'number of train data',
+                               'start', 'end',
+                               'acc', 'loss', 'recall',
+                               'precision', 'F1_micro',
+                               'F1_macro', 'average_acc']
+                df_making = pd.DataFrame(columns=column_list)
+                df_making.to_csv(csv_filename, index=False)
+
+            try:
+                f = open(csv_filename, 'a', newline='')
+                wr = csv.writer(f)
+                wr.writerow(result_list)
+                f.close()
+
+            except PermissionError:
+                print("지금 보고 있는 엑셀창을 닫아주세요.")
+
+            print(i + 1, "번째 학습 끝")
+
+            start = start + 1000
+            end = end + 1000
+
