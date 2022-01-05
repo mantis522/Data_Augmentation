@@ -236,7 +236,7 @@ if __name__ == '__main__':
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
     start = 0
-    end = 10000
+    end = 2500
 
     while start < 50000:
         print("present :", start)
@@ -465,6 +465,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 10000
-        end = end + 10000
+        start = start + 2500
+        end = end + 2500
 
