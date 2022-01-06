@@ -245,8 +245,8 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    start = 0
-    end = 2000
+    start = 10000
+    end = 12000
 
     while start < 50000:
         print("present :", start)
@@ -386,7 +386,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"result\B_Attention\Normal_Attention_biGRU_t5_large2.csv"
+            csv_filename = r"result\B_Attention\Normal_Attention_biGRU_t5_large_Colab.csv"
             result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
