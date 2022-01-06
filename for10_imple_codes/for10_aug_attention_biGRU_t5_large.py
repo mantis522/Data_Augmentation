@@ -88,6 +88,7 @@ class TextBiRNNAttention(Model):
                  maxlen,
                  max_features,
                  embedding_dims,
+                 embedding_matrix,
                  class_num,
                  last_activation='softmax',
                  dense_size=None):
@@ -96,11 +97,13 @@ class TextBiRNNAttention(Model):
         self.maxlen = maxlen
         self.max_features = max_features
         self.embedding_dims = embedding_dims
+        self.embedding_matrix = embedding_matrix
         self.class_num = class_num
         self.last_activation = last_activation
         self.dense_size = dense_size
         self.embedding = Embedding(input_dim=self.max_features,
                                    output_dim=self.embedding_dims,
+                                   weights=[self.embedding_matrix],
                                    input_length=self.maxlen)
         # return_sequences가 True일 경우에는 모든 시점에 대해 은닉 상태를 출력함.
         # return_sequences가 False일 경우에는 마지막 시점에 대해서만 은닉 상태를 출력함.
@@ -146,11 +149,12 @@ def checkout_dir(dir_path, do_delete=False):
         os.makedirs(dir_path)
 
 class ModelHelper:
-    def __init__(self, class_num, maxlen, max_features,
+    def __init__(self, class_num, maxlen, max_features, embedding_matrix,
                  embedding_dims, epochs, batch_size):
         self.class_num = class_num
         self.maxlen = maxlen
         self.max_features = max_features
+        self.embedding_matrix = embedding_matrix
         self.embedding_dims = embedding_dims
         self.epochs = epochs
         self.batch_size = batch_size
@@ -162,6 +166,7 @@ class ModelHelper:
         model = TextBiRNNAttention(maxlen=self.maxlen,
                          max_features=self.max_features,
                          embedding_dims=self.embedding_dims,
+                         embedding_matrix=self.embedding_matrix,
                          class_num=self.class_num,
                          last_activation='softmax')
         model.compile(
@@ -374,11 +379,11 @@ if __name__ == '__main__':
             embedding_dims = 100
             epochs = 15
             batch_size = 256
-            max_features = 5000
 
             model_helper = ModelHelper(class_num=class_num,
                                        maxlen=maxlen,
-                                       max_features=max_features,
+                                       max_features=vocab_size,
+                                       embedding_matrix=embedding_matrix,
                                        embedding_dims=embedding_dims,
                                        epochs=epochs,
                                        batch_size=batch_size
@@ -399,8 +404,9 @@ if __name__ == '__main__':
             print('Restored Model...')
             model_helper = ModelHelper(class_num=class_num,
                                        maxlen=maxlen,
-                                       max_features=max_features,
+                                       max_features=vocab_size,
                                        embedding_dims=embedding_dims,
+                                       embedding_matrix=embedding_matrix,
                                        epochs=epochs,
                                        batch_size=batch_size
                                        )

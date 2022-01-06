@@ -86,6 +86,7 @@ class TextBiRNNAttention(Model):
     def __init__(self,
                  maxlen,
                  max_features,
+                 embedding_matrix,
                  embedding_dims,
                  class_num,
                  last_activation='softmax',
@@ -95,11 +96,13 @@ class TextBiRNNAttention(Model):
         self.maxlen = maxlen
         self.max_features = max_features
         self.embedding_dims = embedding_dims
+        self.embedding_matrix = embedding_matrix
         self.class_num = class_num
         self.last_activation = last_activation
         self.dense_size = dense_size
         self.embedding = Embedding(input_dim=self.max_features,
                                    output_dim=self.embedding_dims,
+                                   weights=[self.embedding_matrix],
                                    input_length=self.maxlen)
         # return_sequences가 True일 경우에는 모든 시점에 대해 은닉 상태를 출력함.
         # return_sequences가 False일 경우에는 마지막 시점에 대해서만 은닉 상태를 출력함.
@@ -145,10 +148,11 @@ def checkout_dir(dir_path, do_delete=False):
         os.makedirs(dir_path)
 
 class ModelHelper:
-    def __init__(self, class_num, maxlen, max_features,
+    def __init__(self, class_num, maxlen, max_features, embedding_matrix,
                  embedding_dims, epochs, batch_size):
         self.class_num = class_num
         self.maxlen = maxlen
+        self.embedding_matrix = embedding_matrix
         self.max_features = max_features
         self.embedding_dims = embedding_dims
         self.epochs = epochs
@@ -161,6 +165,7 @@ class ModelHelper:
         model = TextBiRNNAttention(maxlen=self.maxlen,
                          max_features=self.max_features,
                          embedding_dims=self.embedding_dims,
+                         embedding_matrix=self.embedding_matrix,
                          class_num=self.class_num,
                          last_activation='softmax')
         model.compile(
@@ -231,7 +236,6 @@ if __name__ == '__main__':
     embedding_dims = 100
     epochs = 15
     batch_size = 256
-    max_features = 5000
 
     file_path = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
     glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
@@ -242,7 +246,7 @@ if __name__ == '__main__':
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
     start = 0
-    end = 2000
+    end = 1000
 
     while start < 50000:
         print("present :", start)
@@ -331,7 +335,8 @@ if __name__ == '__main__':
 
             model_helper = ModelHelper(class_num=class_num,
                                        maxlen=maxlen,
-                                       max_features=max_features,
+                                       max_features=vocab_size,
+                                       embedding_matrix=embedding_matrix,
                                        embedding_dims=embedding_dims,
                                        epochs=epochs,
                                        batch_size=batch_size
@@ -352,8 +357,9 @@ if __name__ == '__main__':
             print('Restored Model...')
             model_helper = ModelHelper(class_num=class_num,
                                        maxlen=maxlen,
-                                       max_features=max_features,
+                                       max_features=vocab_size,
                                        embedding_dims=embedding_dims,
+                                       embedding_matrix=embedding_matrix,
                                        epochs=epochs,
                                        batch_size=batch_size
                                        )
@@ -388,7 +394,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"result\B_Attention\Normal_Attention_biGRU_t5_large.csv"
+            csv_filename = r"result\B_Attention\Normal_Attention_biGRU_t5_large2.csv"
             result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
@@ -417,6 +423,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 2000
-        end = end + 2000
+        start = start + 1000
+        end = end + 1000
 
