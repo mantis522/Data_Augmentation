@@ -1,41 +1,37 @@
 import tensorflow as tf
-import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
-import tensorflow_addons as tfa
 import os
+from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+from tensorflow.keras.preprocessing.text import Tokenizer
+import tensorflow_addons as tfa
+import pandas as pd
+import numpy as np
 
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
         super(MyModel, self).__init__()
-        # 모델 기술
         self.Embedding_layer = tf.keras.layers.Embedding(input_dim=vocab_size,
                                                          output_dim=100,
                                                          weights=[embedding_matrix],
                                                          input_length=text_num,
                                                          trainable=False)
-        self.GRU_layer = tf.keras.layers.GRU(128)
-        self.Dense_layer = tf.keras.layers.Dense(2, activation='softmax')
-        self.maxlen = text_num
+        self.Dropout1 = tf.keras.layers.Dropout(0.3)
+        self.Conv1D = tf.keras.layers.Conv1D(256, 3, padding='valid', activation='relu')
+        self.Maxpooling = tf.keras.layers.GlobalMaxPool1D()
+        self.Dense_layer1 = tf.keras.layers.Dense(128, activation='relu')
+        self.Dropout2 = tf.keras.layers.Dropout(0.3)
+        self.Dense_layer2 = tf.keras.layers.Dense(2, activation='softmax')
 
     def call(self, input):
-        if len(input.get_shape()) != 2:
-            raise ValueError('The rank of inputs of MyModel must be 2, but now is {}'.format(input.get_shape()))
-        if input.get_shape()[1] != self.maxlen:
-            raise ValueError(
-                'The maxlen of inputs of MyModel must be %d, but now is %d' % (self.maxlen, input.get_shape()[1]))
-
-        # 임베딩 레이어에서 input을 넣는 것으로 시작
-        # GRU_layer를 거쳐서
-        # Dense_layer로 결과 출력.
-        # 여기에서 카테고리 분류로 했기 때문에 2, 활성화함수는 소프트맥스
         net = self.Embedding_layer(input)
-        net = self.GRU_layer(net)
-        net = self.Dense_layer(net)
+        net = self.Dropout1(net)
+        net = self.Conv1D(net)
+        net = self.Maxpooling(net)
+        net = self.Dense_layer1(net)
+        net = self.Dropout2(net)
+        net = self.Dense_layer2(net)
 
         return net
 
@@ -58,11 +54,9 @@ class ModelHelper:
         self.create_model()
 
     def create_model(self):
-        # 모델 생성. 위에서 만든거.
         model = MyModel(vocab_size=self.vocab_size,
                         embedding_matrix=self.embedding_matrix,
                         text_num=self.maxlen)
-        # 컴파일. 케라스의 진행은 모델 생성 -> 컴파일로 진행됨.
         model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['acc',
                                tf.keras.metrics.Recall(name='recall'),
@@ -75,23 +69,12 @@ class ModelHelper:
                                                    average='macro')])
         self.model = model
 
-    # early_stop은 사용함.
     def get_callback(self, use_early_stop=True,
                      tensorboard_log_dir='logs\\FastText-epoch-5',
                      checkpoint_path="save_model_dir\\cp-moel.ckpt"):
 
-        # callback_list는 콜백에 대한 정보가 들어간다.
-        # print 찍어보면 [<keras.callbacks.EarlyStopping object at 0x000001B304626F70>,
-        # <keras.callbacks.ModelCheckpoint object at 0x000001B30A55FD60>,
-        # <keras.callbacks.TensorBoard object at 0x000001B30A330DC0>]
-        # 이런식으로 출력됨.
-
         callback_list = []
-        # 만약 early_stop을 사용한다면 validation_loss값을 대상으로
-        # monitor하는 값이 최소가 되어야 하는지, 최대가 되어야 하는지 알려주는 인자.
-        # 예를 들어 monitor하는 값이 val_acc 일경우, 값이 클수록 좋기 때문에 'max'
-        # val_loss일 경우 작을수록 좋기 때문에 'min'
-        # 'auto'는 모델이 알아서 판단한다.
+
         if use_early_stop:
             early_stopping = EarlyStopping(monitor='val_loss',
                                            patience=3, mode='min')
@@ -118,11 +101,6 @@ class ModelHelper:
 
         self.callback_list = callback_list
 
-
-    # 모델 fit.
-    # train하는 과정으로 훈련 데이터, 검증 데이터 들어감.
-    # batch_size, epochs, verbose, callback, validation_data 등이 들어감.
-
     def fit(self, x_train, y_train, x_val, y_val):
         print('Train...')
         self.model.fit(x_train, y_train,
@@ -148,26 +126,12 @@ if __name__ == '__main__':
 
     text_encoding = df_imdb['text']
 
-    # 정수 인코딩.
-    # fit_on_texts()를 통해 정수 인코딩 실시.
-    # tokenizer.fit_on_texts(X_train)은 X_train에 대해 정수인코딩을 실시한다고 보면 된다.
-    # tokenizer.word_index를 치면
-    # {'영화': 1, '보다': 2, '을': 3, ... 중략 ... '디케이드': 43751, '수간': 43752} 식으로 출력됨.
-
     t = Tokenizer()
     t.fit_on_texts(text_encoding)
-
-    # 단어의 수 + 1을 해주는 것.
     vocab_size = len(t.word_index) + 1
 
-    # 텍스트 시퀀스를 숫자 시퀀스로 변환
-    # 출력해보면
-    # [[50, 454, 16, 260, 659], [933, 457, 41, 602, 1, 214, 1449, 24, 961, 675, 19], [386, 2444, 2315, 5671, 2, 222, 9]]
-    # 이런 식으로 출력됨.
-    # 각 숫자들은 위의 텍스트 시퀀스와 1:1로 매칭됨.
     sequences = t.texts_to_sequences(text_encoding)
 
-    # 패딩을 위한 밑작업.
     def max_text():
         for i in range(1, len(sequences)):
             max_length = len(sequences[0])
@@ -179,7 +143,7 @@ if __name__ == '__main__':
 
     maxlen = text_num
     batch_size = 128
-    epochs = 15
+    epochs = 20
 
     def Glove_Embedding():
         embeddings_index = {}
@@ -227,53 +191,29 @@ if __name__ == '__main__':
     print('X_val size: ', x_val.shape)
     print('y_val size: ', y_val.shape)
 
-    MODEL_NAME = 'TestGRU-epoch-10-emb-100'
+    MODEL_NAME = 'CNN-epoch-20-emb-100'
 
     use_early_stop = True
     tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
     checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
 
-
-    # def __init__(self, ...)에 나온 값들을 넣는다.
     model_helper = ModelHelper(batch_size=batch_size, epochs=epochs,
                                vocab_size=vocab_size,
                                embedding_matrix=embedding_matrix,
                                text_num=maxlen)
 
-    # def get_callback에 나온 값들을 넣는다.
     model_helper.get_callback(use_early_stop=use_early_stop,
                               tensorboard_log_dir=tensorboard_log_dir,
                               checkpoint_path=checkpoint_path)
 
-    # def fit에 나온 값들을 넣는다. 본격적인 훈련 부분
     model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
 
-
-    # ------------------------------------------------------------------------
-
-    # 실질적인 테스트 검증은 아래 model_helper에서 진행하기 때문에 이 부분은 그닥 필요없음.
-    # 정확도는 여기가 높을때도 있고 저장된 모델이 높을 때도 있는데 웬만하면 아래꺼 쓰자.
-    # 기존에 학습한 model에 대해서 새로운 예측값을 얻는 것은 model.predict()를 사용한다.
-    # 시퀀스 -> 패딩을 거친 값을 model.predict에 넣으면 해당 데이터에 대한 예측이 가능.
-    result = model_helper.model.predict(x_test)
-
-    # model evaluate는 테스트 정확도를 얻을 때 사용.
-    test_score = model_helper.model.evaluate(x_test, y_test,
-                                             batch_size=batch_size)
-
-    print("test loss:", test_score[0], "test accuracy", test_score[1])
-    print('Restored Model...')
-
-    # ------------------------------------------------------------------------
-
-    # 저장된 모델에 대해 테스트 진행.
     model_helper = ModelHelper(batch_size=batch_size,
                                epochs=epochs, vocab_size=vocab_size,
                                embedding_matrix=embedding_matrix,
                                text_num=maxlen)
     model_helper.load_model(checkpoint_path=checkpoint_path)
 
-    # 위 metric에서 이 평가지표를 전부 넣었기 때문에 여기서 전부 출력.
     loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
 
     print("Restored model, accuracy: {:5.2f}%".format(100 * acc))

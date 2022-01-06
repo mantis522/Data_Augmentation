@@ -377,7 +377,7 @@ if __name__ == '__main__':
 
             class_num = 2
             embedding_dims = 100
-            epochs = 15
+            epochs = 20
             batch_size = 256
 
             model_helper = ModelHelper(class_num=class_num,
@@ -392,14 +392,6 @@ if __name__ == '__main__':
             model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
                                       checkpoint_path=checkpoint_path)
             model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
-
-            result = model_helper.model.predict(x_test)
-
-            # model evaluate는 테스트 정확도를 얻을 때 사용.
-            test_score = model_helper.model.evaluate(x_test, y_test,
-                                                     batch_size=batch_size)
-
-            print("test loss:", test_score[0], "test accuracy", test_score[1])
 
             print('Restored Model...')
             model_helper = ModelHelper(class_num=class_num,
@@ -442,7 +434,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"result\B_Attention\Aug_Attention_biGRU_t5_large.csv"
+            csv_filename = r"result\B_Attention\Aug_Attention_biGRU_t5_large2.csv"
             result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 

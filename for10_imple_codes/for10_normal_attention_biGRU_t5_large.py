@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     class_num = 2
     embedding_dims = 100
-    epochs = 15
+    epochs = 20
     batch_size = 256
 
     file_path = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
     start = 0
-    end = 1000
+    end = 2000
 
     while start < 50000:
         print("present :", start)
@@ -346,14 +346,6 @@ if __name__ == '__main__':
                                       checkpoint_path=checkpoint_path)
             model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
 
-            result = model_helper.model.predict(x_test)
-
-            # model evaluate는 테스트 정확도를 얻을 때 사용.
-            test_score = model_helper.model.evaluate(x_test, y_test,
-                                                     batch_size=batch_size)
-
-            print("test loss:", test_score[0], "test accuracy", test_score[1])
-
             print('Restored Model...')
             model_helper = ModelHelper(class_num=class_num,
                                        maxlen=maxlen,
@@ -423,6 +415,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 1000
-        end = end + 1000
+        start = start + 2000
+        end = end + 2000
 
