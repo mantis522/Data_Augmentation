@@ -1,8 +1,4 @@
-from tensorflow.keras import initializers
-from tensorflow.keras.layers import Layer
 import tensorflow as tf
-from tensorflow.keras.layers import Embedding, Dense, GRU, Bidirectional
-from tensorflow.keras import Model
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
@@ -15,86 +11,30 @@ import numpy as np
 import datetime
 import csv
 
-class Attention(Layer):
-    def __init__(self, use_bias=True):
-        super(Attention, self).__init__()
-        self.bias = use_bias
-        self.init = initializers.get('glorot_uniform')
+class MyModel(tf.keras.Model):
+    def __init__(self, vocab_size, text_num):
+        super(MyModel, self).__init__()
+        self.Embedding_layer = tf.keras.layers.Embedding(input_dim=vocab_size,
+                                                         output_dim=100,
+                                                         input_length=text_num,
+                                                         trainable=False)
+        self.Dropout1 = tf.keras.layers.Dropout(0.3)
+        self.Conv1D = tf.keras.layers.Conv1D(256, 3, padding='valid', activation='relu')
+        self.Maxpooling = tf.keras.layers.GlobalMaxPool1D()
+        self.Dense_layer1 = tf.keras.layers.Dense(128, activation='relu')
+        self.Dropout2 = tf.keras.layers.Dropout(0.3)
+        self.Dense_layer2 = tf.keras.layers.Dense(2, activation='softmax')
 
-    def build(self, input_shape):
-        self.ouput_dim = input_shape[-1]
-        self.W = self.add_weight(name='{}_W'.format(self.name),
-                                 shape=(input_shape[2], 1),
-                                 initializer=self.init,
-                                 trainable=True)
-        if self.bias:
-            self.b = self.add_weight(
-                name='{}_b'.format(self.name),
-                shape=(input_shape[1], 1),
-                initializer='zero',
-                trainable=True)
-        else:
-            self.b = None
+    def call(self, input):
+        net = self.Embedding_layer(input)
+        net = self.Dropout1(net)
+        net = self.Conv1D(net)
+        net = self.Maxpooling(net)
+        net = self.Dense_layer1(net)
+        net = self.Dropout2(net)
+        net = self.Dense_layer2(net)
 
-        self.built = True
-
-    def compute_mask(self, inputs, mask=None):
-        return None
-
-    def call(self, inputs, mask=None):
-        score = tf.matmul(inputs, self.W)
-        if self.bias:
-            score += self.b
-        score = tf.tanh(score)
-        attention_weights = tf.nn.softmax(score, axis=1)
-        context_vector = inputs * attention_weights
-        context_vector = tf.reduce_sum(context_vector, axis=1)
-
-        return context_vector
-
-    def get_config(self):
-        return {'units': self.output_dim}
-
-class TextBiRNNAttention(Model):
-    def __init__(self,
-                 maxlen,
-                 max_features,
-                 embedding_dims,
-                 class_num,
-                 last_activation='softmax',
-                 dense_size=None):
-
-        super(TextBiRNNAttention, self).__init__()
-        self.maxlen = maxlen
-        self.max_features = max_features
-        self.embedding_dims = embedding_dims
-        self.class_num = class_num
-        self.last_activation = last_activation
-        self.dense_size = dense_size
-        self.embedding = Embedding(input_dim=self.max_features,
-                                   output_dim=self.embedding_dims,
-                                   input_length=self.maxlen)
-        self.bi_rnn = Bidirectional(layer=GRU(
-            units=128, activation='tanh', return_sequences=True
-        ), merge_mode='concat')
-        self.attention = Attention()
-        self.classifier = Dense(self.class_num,
-                                activation=self.last_activation)
-
-    def call(self, inputs):
-        if len(inputs.get_shape()) != 2:
-            raise ValueError('The rank of inputs of TextBiRNNAtt must be 2, but now is {}'.format(inputs.get_shape()))
-        if inputs.get_shape()[1] != self.maxlen:
-            raise ValueError(
-                'The maxlen of inputs of TextBiRNNAtt must be %d, but now is %d' % (self.maxlen, inputs.get_shape()[1]))
-        emb = self.embedding(inputs)
-        x = self.bi_rnn(emb)
-        x = self.attention(x)
-        if self.dense_size is not None:
-            x = self.ffn(x)
-        output = self.classifier(x)
-
-        return output
+        return net
 
 def checkout_dir(dir_path, do_delete=False):
     import shutil
@@ -105,76 +45,69 @@ def checkout_dir(dir_path, do_delete=False):
         os.makedirs(dir_path)
 
 class ModelHelper:
-    def __init__(self, class_num, maxlen, max_features,
-                 embedding_dims, epochs, batch_size):
-        self.class_num = class_num
-        self.maxlen = maxlen
-        self.max_features = max_features
-        self.embedding_dims = embedding_dims
-        self.epochs = epochs
+    def __init__(self, batch_size, epochs, vocab_size, text_num):
         self.batch_size = batch_size
+        self.epochs = epochs
+        self.vocab_size = vocab_size
+        self.maxlen = text_num
         self.callback_list = []
-        print('Build Model...')
         self.create_model()
 
     def create_model(self):
-        model = TextBiRNNAttention(maxlen=self.maxlen,
-                         max_features=self.max_features,
-                         embedding_dims=self.embedding_dims,
-                         class_num=self.class_num,
-                         last_activation='softmax')
-        model.compile(
-            optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['acc',
-                     tf.keras.metrics.Recall(name='recall'),
-                     tf.keras.metrics.Precision(name='precision'),
-                     tfa.metrics.F1Score(name='F1_micro',
-                                         num_classes=2,
-                                         average='micro'),
-                     tfa.metrics.F1Score(name='F1_macro',
-                                         num_classes=2,
-                                         average='macro')
-                     ],
-        )
-
-        # model.summary()
+        model = MyModel(vocab_size=self.vocab_size,
+                        text_num=self.maxlen)
+        model.compile(optimizer='adam', loss='categorical_crossentropy',
+                      metrics=['acc',
+                               tf.keras.metrics.Recall(name='recall'),
+                               tf.keras.metrics.Precision(name='precision'),
+                               tfa.metrics.F1Score(name='F1_micro',
+                                                   num_classes=2,
+                                                   average='micro'),
+                               tfa.metrics.F1Score(name='F1_macro',
+                                                   num_classes=2,
+                                                   average='macro')])
         self.model = model
 
     def get_callback(self, use_early_stop=True,
                      tensorboard_log_dir='logs\\FastText-epoch-5',
                      checkpoint_path="save_model_dir\\cp-moel.ckpt"):
+
         callback_list = []
+
         if use_early_stop:
-            early_stopping = EarlyStopping(monitor='val_loss', patience=3, mode='min')
+            early_stopping = EarlyStopping(monitor='val_loss',
+                                           patience=3, mode='min')
             callback_list.append(early_stopping)
+
         if checkpoint_path is not None:
             checkpoint_dir = os.path.dirname(checkpoint_path)
             checkout_dir(checkpoint_dir, do_delete=True)
             cp_callback = ModelCheckpoint(filepath=checkpoint_path,
-                                             monitor='val_loss',
-                                             mode='min',
-                                             save_best_only=True,
-                                             save_weights_only=True,
-                                             verbose=1,
-                                             period=2,
-                                             )
+                                          monitor='val_loss',
+                                          mode='min',
+                                          save_best_only=True,
+                                          save_weights_only=True,
+                                          verbose=1,
+                                          period=2,
+                                          )
             callback_list.append(cp_callback)
+
         if tensorboard_log_dir is not None:
             checkout_dir(tensorboard_log_dir, do_delete=True)
             tensorboard_callback = TensorBoard(log_dir=tensorboard_log_dir,
                                                histogram_freq=1)
             callback_list.append(tensorboard_callback)
+
         self.callback_list = callback_list
 
     def fit(self, x_train, y_train, x_val, y_val):
         print('Train...')
         self.model.fit(x_train, y_train,
-                  batch_size=self.batch_size,
-                  epochs=self.epochs,
-                  verbose=1,
-                  callbacks=self.callback_list,
-                  validation_data=(x_val, y_val))
+                       batch_size=self.batch_size,
+                       epochs=self.epochs,
+                       verbose=1,
+                       callbacks=self.callback_list,
+                       validation_data=(x_val, y_val))
 
     def load_model(self, checkpoint_path):
         checkpoint_dir = os.path.dirname((checkpoint_path))
@@ -190,14 +123,15 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
     start = 0
-    end = 25000
+    end = 50000
+
+    batch_size = 256
+    epochs = 20
 
     while start < 50000:
         print("present :", start)
 
         original_data = df_imdb[start:end]
-
-        # -----------------------------------
 
         before_concat_origin = np.array(original_data['original_text'].tolist())
         before_concat_origin = list(before_concat_origin)
@@ -215,7 +149,6 @@ if __name__ == '__main__':
 
         sequences = t.texts_to_sequences(text_encoding)
 
-
         def max_text():
             for i in range(1, len(sequences)):
                 max_length = len(sequences[0])
@@ -223,14 +156,9 @@ if __name__ == '__main__':
                     max_length = len(sequences[i])
             return max_length
 
-
         text_num = max_text()
 
         maxlen = text_num
-
-
-        # ---------------------------------------
-        # ------로 가둬둔 부분은 정수 인코딩을 위해 오리지널 + 요약문 더하고 인코딩한 부분.
 
         train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
         test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
@@ -238,7 +166,6 @@ if __name__ == '__main__':
         train_df = train_df.reset_index(drop=True)
         test_df = test_df.reset_index(drop=True)
         val_df = val_df.reset_index(drop=True)
-
 
         def A2D_train(data_df):
             text_list = []
@@ -285,46 +212,32 @@ if __name__ == '__main__':
         print('y_val size: ', y_val.shape)
 
         avg_list = []
-
         numbers_of_times = 10
 
         for i in range(numbers_of_times):
             print(i + 1, "번째 학습 시작.")
+
+            MODEL_NAME = 'Normal_CNN'
             use_early_stop = True
-            MODEL_NAME = 'Aug_attention'
             tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
             checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
 
-            class_num = 2
-            embedding_dims = 100
-            epochs = 20
-            batch_size = 256
+            model_helper = ModelHelper(batch_size=batch_size, epochs=epochs,
+                                       vocab_size=vocab_size,
+                                       text_num=maxlen)
 
-            model_helper = ModelHelper(class_num=class_num,
-                                       maxlen=maxlen,
-                                       max_features=vocab_size,
-                                       embedding_dims=embedding_dims,
-                                       epochs=epochs,
-                                       batch_size=batch_size
-                                       )
-
-            model_helper.get_callback(use_early_stop=use_early_stop, tensorboard_log_dir=tensorboard_log_dir,
+            model_helper.get_callback(use_early_stop=use_early_stop,
+                                      tensorboard_log_dir=tensorboard_log_dir,
                                       checkpoint_path=checkpoint_path)
+
             model_helper.fit(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val)
 
-            print('Restored Model...')
-            model_helper = ModelHelper(class_num=class_num,
-                                       maxlen=maxlen,
-                                       max_features=vocab_size,
-                                       embedding_dims=embedding_dims,
-                                       epochs=epochs,
-                                       batch_size=batch_size
-                                       )
-
+            model_helper = ModelHelper(batch_size=batch_size,
+                                       epochs=epochs, vocab_size=vocab_size,
+                                       text_num=maxlen)
             model_helper.load_model(checkpoint_path=checkpoint_path)
 
             loss, acc, recall, precision, F1_micro, F1_macro = model_helper.model.evaluate(x_test, y_test, verbose=1)
-
             avg_list.append(float(acc))
 
             avg_sum = sum(avg_list)
@@ -350,7 +263,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\B_Attention\Aug_Attention_biGRU_t5_large.csv"
+            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\CNN\Aug_CNN_t5_large.csv"
             result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
@@ -379,6 +292,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 25000
-        end = end + 25000
+        start = start + 0
+        end = end + 0
 
