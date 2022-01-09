@@ -123,7 +123,7 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
     start = 0
-    end = 50000
+    end = 5000
 
     batch_size = 256
     epochs = 20
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
         maxlen = text_num
 
-        train_df, test_df = train_test_split(df_imdb, test_size=0.4, random_state=0)
+        train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
         test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
         def making_dataset(data_df):
@@ -256,6 +256,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 0
-        end = end + 0
+        start = start + 5000
+        end = end + 5000
 
