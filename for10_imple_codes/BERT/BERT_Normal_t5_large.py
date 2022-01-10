@@ -126,13 +126,13 @@ if __name__ == '__main__':
     imdb_df = pd.read_csv(file_path)
     df_imdb = imdb_df.drop(['Unnamed: 0'], axis=1)
 
-    maxlen = 300
+    maxlen = 280
     class_num = 2
-    epochs = 4
+    epochs = 3
     batch_size = 8
 
     start = 0
-    end = 500
+    end = 2000
 
     while start < 50000:
         print("present :", start)
@@ -330,5 +330,5 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 5000
-        end = end + 5000
+        start = start + 2000
+        end = end + 2000

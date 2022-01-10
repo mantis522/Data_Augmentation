@@ -123,7 +123,7 @@ if __name__ == '__main__':
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
 
     start = 0
-    end = 2500
+    end = 10000
 
     batch_size = 256
     epochs = 20
@@ -256,6 +256,6 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 2500
-        end = end + 2500
+        start = start + 10000
+        end = end + 10000
 
