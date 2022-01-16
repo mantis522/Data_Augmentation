@@ -11,6 +11,9 @@ import tensorflow_addons as tfa
 import pandas as pd
 import numpy as np
 
+# Recurrent Neural Network for Text Classification with Multi-Task Learning
+# 이 모델의 경우는 embedding_matrix 없으면 정확도 확 깎임.
+
 class MyModel(Model):
     def __init__(self, vocab_size, text_num, embedding_matrix):
         super(MyModel, self).__init__()
