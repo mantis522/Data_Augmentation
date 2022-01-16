@@ -6,7 +6,6 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
-from tensorflow.keras import backend as K
 import tensorflow_addons as tfa
 import os
 
@@ -114,7 +113,7 @@ class ModelHelper:
                                                                                   ])
         self.model = model
 
-    def get_callback(self, use_early_stop=True, tensorboard_log_dir='logs\\FastText-epoch-5',
+    def get_callback(self, use_early_stop=True, tensorboard_log_dir='logs\\epoch-5',
                      checkpoint_path="save_model_dir\\cp-moel.ckpt"):
         callback_list = []
 

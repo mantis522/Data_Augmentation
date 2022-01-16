@@ -131,8 +131,8 @@ if __name__ == '__main__':
     epochs = 3
     batch_size = 8
 
-    start = 0
-    end = 2000
+    start = 2000
+    end = 4000
 
     while start < 50000:
         print("present :", start)

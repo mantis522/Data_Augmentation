@@ -11,16 +11,13 @@ import tensorflow_addons as tfa
 import pandas as pd
 import numpy as np
 
-# 왜인지는 모르겠으나 성능이 폐급 수준임...
-# 정확도가 60%는 넘는걸 보면 데이터 전처리 문제는 아닌 것 같은데...
-# 그냥 이 모델은 쓰지 말자.
-
 class MyModel(Model):
-    def __init__(self, vocab_size, text_num):
+    def __init__(self, vocab_size, text_num, embedding_matrix):
         super(MyModel, self).__init__()
         self.Embedding_layer = Embedding(input_dim=vocab_size,
                                                          output_dim=100,
                                                          input_length=text_num,
+                                                         weights=[embedding_matrix],
                                                          trainable=False)
         self.LSTM_layer1 = Bidirectional(LSTM(64, return_sequences=True))
         self.Dropout1 = Dropout(0.3)
@@ -56,16 +53,18 @@ def checkout_dir(dir_path, do_delete=False):
         os.makedirs(dir_path)
 
 class ModelHelper:
-    def __init__(self, batch_size, epochs, vocab_size, text_num):
+    def __init__(self, batch_size, epochs, vocab_size, text_num, embedding_matrix):
         self.batch_size = batch_size
         self.epochs = epochs
         self.vocab_size = vocab_size
         self.maxlen = text_num
+        self.embedding_matrix = embedding_matrix
         self.callback_list = []
         self.create_model()
 
     def create_model(self):
         model = MyModel(vocab_size=self.vocab_size,
+                        embedding_matrix=self.embedding_matrix,
                         text_num=self.maxlen)
         model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['acc',
@@ -86,7 +85,7 @@ class ModelHelper:
         callback_list = []
         if use_early_stop:
             early_stopping = EarlyStopping(monitor='val_loss',
-                                           patience=10, mode='min')
+                                           patience=4, mode='min')
             callback_list.append(early_stopping)
 
         if checkpoint_path is not None:
@@ -128,6 +127,7 @@ class ModelHelper:
 
 if __name__ == '__main__':
     file_path = r"D:\ruin\data\IMDB Dataset2.csv"
+    glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
 
     imdb_csv = file_path
     df_imdb = pd.read_csv(imdb_csv)
@@ -157,6 +157,29 @@ if __name__ == '__main__':
     train_df, test_df = train_test_split(df_imdb, test_size=0.2, random_state=0)
     test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
 
+    def Glove_Embedding():
+        embeddings_index = {}
+        f = open(glove_path, encoding='utf-8')
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
+        f.close()
+
+        embedding_matrix = np.zeros((vocab_size, 100))
+
+        # fill in matrix
+        for word, i in t.word_index.items():  # dictionary
+            embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
+            if embedding_vector is not None:
+                # add to matrix
+                embedding_matrix[i] = embedding_vector  # each row of matrix
+
+        return embedding_matrix
+
+    embedding_matrix = Glove_Embedding()
+
     def making_dataset(data_df):
         x_train = data_df['text'].values
         x_train = t.texts_to_sequences(x_train)
@@ -185,6 +208,7 @@ if __name__ == '__main__':
     checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
 
     model_helper = ModelHelper(batch_size=batch_size, epochs=epochs,
+                               embedding_matrix=embedding_matrix,
                                vocab_size=vocab_size,
                                text_num=maxlen)
 
@@ -196,6 +220,7 @@ if __name__ == '__main__':
 
     model_helper = ModelHelper(batch_size=batch_size,
                                epochs=epochs, vocab_size=vocab_size,
+                               embedding_matrix=embedding_matrix,
                                text_num=maxlen)
     model_helper.load_model(checkpoint_path=checkpoint_path)
 
