@@ -2,6 +2,9 @@ import pandas as pd
 from transformers import pipeline
 import time
 
+# https://discuss.huggingface.co/t/new-pipeline-for-zero-shot-text-classification/681
+# https://stackoverflow.com/questions/67849833/how-to-truncate-input-in-the-huggingface-pipeline
+
 
 start = time.time()
 
