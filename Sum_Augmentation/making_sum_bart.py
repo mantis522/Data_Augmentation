@@ -3,6 +3,8 @@ import pandas as pd
 import re
 import time
 
+# https://huggingface.co/docs/transformers/task_summary
+
 start = time.time()
 
 imdb_data = r"D:\ruin\data\IMDB Dataset2.csv"
