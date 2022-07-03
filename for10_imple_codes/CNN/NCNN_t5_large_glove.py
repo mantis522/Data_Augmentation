@@ -12,10 +12,11 @@ import datetime
 import csv
 
 class MyModel(tf.keras.Model):
-    def __init__(self, vocab_size, text_num):
+    def __init__(self, vocab_size, embedding_matrix, text_num):
         super(MyModel, self).__init__()
         self.Embedding_layer = tf.keras.layers.Embedding(input_dim=vocab_size,
                                                          output_dim=100,
+                                                         weights=[embedding_matrix],
                                                          input_length=text_num,
                                                          trainable=False)
         self.Dropout1 = tf.keras.layers.Dropout(0.3)
@@ -45,9 +46,11 @@ def checkout_dir(dir_path, do_delete=False):
         os.makedirs(dir_path)
 
 class ModelHelper:
-    def __init__(self, batch_size, epochs, vocab_size, text_num):
+    def __init__(self, batch_size, epochs, embedding_matrix,
+                 vocab_size, text_num):
         self.batch_size = batch_size
         self.epochs = epochs
+        self.embedding_matrix = embedding_matrix
         self.vocab_size = vocab_size
         self.maxlen = text_num
         self.callback_list = []
@@ -55,6 +58,7 @@ class ModelHelper:
 
     def create_model(self):
         model = MyModel(vocab_size=self.vocab_size,
+                        embedding_matrix=self.embedding_matrix,
                         text_num=self.maxlen)
         model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['acc',
@@ -128,30 +132,6 @@ if __name__ == '__main__':
 
     batch_size = 256
     epochs = 20
-    embedding_dims = 100
-
-    def Glove_Embedding():
-        embeddings_index = {}
-        f = open(glove_path, encoding='utf-8')
-        for line in f:
-            values = line.split()
-            word = values[0]
-            coefs = np.asarray(values[1:], dtype='float32')
-            embeddings_index[word] = coefs
-        f.close()
-
-        embedding_matrix = np.zeros((vocab_size, 100))
-
-        # fill in matrix
-        for word, i in t.word_index.items():  # dictionary
-            embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
-            if embedding_vector is not None:
-                # add to matrix
-                embedding_matrix[i] = embedding_vector  # each row of matrix
-
-        return embedding_matrix
-
-    embedding_matrix = Glove_Embedding()
 
     while start < 50000:
         print("present :", start)
@@ -174,6 +154,29 @@ if __name__ == '__main__':
         text_num = max_text()
 
         maxlen = text_num
+
+        def Glove_Embedding():
+            embeddings_index = {}
+            f = open(glove_path, encoding='utf-8')
+            for line in f:
+                values = line.split()
+                word = values[0]
+                coefs = np.asarray(values[1:], dtype='float32')
+                embeddings_index[word] = coefs
+            f.close()
+
+            embedding_matrix = np.zeros((vocab_size, 100))
+
+            # fill in matrix
+            for word, i in t.word_index.items():  # dictionary
+                embedding_vector = embeddings_index.get(word)  # gets embedded vector of word from GloVe
+                if embedding_vector is not None:
+                    # add to matrix
+                    embedding_matrix[i] = embedding_vector  # each row of matrix
+
+            return embedding_matrix
+
+        embedding_matrix = Glove_Embedding()
 
         train_df, test_df = train_test_split(original_data, test_size=0.4, random_state=0)
         test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
@@ -212,7 +215,6 @@ if __name__ == '__main__':
             model_helper = ModelHelper(batch_size=batch_size, epochs=epochs,
                                        vocab_size=vocab_size,
                                        embedding_matrix=embedding_matrix,
-                                       embedding_dims=embedding_dims,
                                        text_num=maxlen)
 
             model_helper.get_callback(use_early_stop=use_early_stop,
@@ -224,7 +226,6 @@ if __name__ == '__main__':
             model_helper = ModelHelper(batch_size=batch_size,
                                        epochs=epochs, vocab_size=vocab_size,
                                        embedding_matrix=embedding_matrix,
-                                       embedding_dims=embedding_dims,
                                        text_num=maxlen)
             model_helper.load_model(checkpoint_path=checkpoint_path)
 
