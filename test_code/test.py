@@ -22,4 +22,4 @@ for i in range(len(test_data)):
         aug_label_list.append(1)
 
 df = pd.DataFrame((zip(ori_text_list, ori_label_list, aug_text_list, aug_label_list)), columns=['original_text', 'original_label', 'summarized_text', 'huggingface_sentiment'])
-df.to_csv("test.csv", index=False)
+df.to_csv("test.csv")
