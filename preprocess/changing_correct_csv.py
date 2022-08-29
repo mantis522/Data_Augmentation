@@ -1,9 +1,9 @@
 import pandas as pd
 from tqdm import tqdm
 
-large_name = "/Users/ruin/Desktop/data/amazon_review_polarity_csv/amazon_t5_large_with_huggingface_sentiment.csv"
-base_name = "/Users/ruin/Desktop/data/amazon_review_polarity_csv/amazon_t5_base_with_huggingface_sentiment.csv"
-bart_name = "/Users/ruin/Desktop/data/amazon_review_polarity_csv/amazon_bart_with_huggingface_sentiment.csv"
+large_name = r"D:\ruin\data\amazon\amazon_review_polarity_csv\amazon_t5_large_with_huggingface_sentiment.csv"
+base_name = r"D:\ruin\data\amazon\amazon_review_polarity_csv\amazon_t5_base_with_huggingface_sentiment.csv"
+bart_name = r"D:\ruin\data\amazon\amazon_review_polarity_csv\amazon_bart_with_huggingface_sentiment.csv"
 
 large_data = pd.read_csv(large_name)
 base_data = pd.read_csv(base_name)
