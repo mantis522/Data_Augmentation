@@ -121,18 +121,18 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 if __name__ == '__main__':
-    file_path = r"D:\ruin\data\imdb_summarization\t5_large_with_huggingface_sentiment.csv"
+    file_path = r"D:\ruin\data\amazon\amazon_review_polarity_csv\test2.csv"
 
     imdb_df = pd.read_csv(file_path)
     df_imdb = imdb_df.drop(['Unnamed: 0'], axis=1)
 
-    maxlen = 280
+    maxlen = 200
     class_num = 2
     epochs = 3
-    batch_size = 8
+    batch_size = 4
 
     start = 0
-    end = 2000
+    end = 500
 
     while start < 50000:
         print("present :", start)
@@ -252,7 +252,7 @@ if __name__ == '__main__':
             print(i + 1, "번째 학습 시작.")
 
             use_early_stop = True
-            MODEL_NAME = 'BERT-Normal-IMDB'
+            MODEL_NAME = 'BERT-Normal-Amazon'
 
             tensorboard_log_dir = 'logs\\{}'.format(MODEL_NAME)
             checkpoint_path = 'save_model_dir\\' + MODEL_NAME + '\\cp-{epoch:04d}.ckpt'
@@ -301,7 +301,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\BERT\Normal_BERT_t5_large.csv"
+            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\BERT\Amazon_Normal_BERT_t5_large.csv"
             result_list = [now, i + 1, len(original_data), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
@@ -330,5 +330,5 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 2000
-        end = end + 2000
+        start = start + 500
+        end = end + 500
