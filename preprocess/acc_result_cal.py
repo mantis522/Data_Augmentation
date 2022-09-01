@@ -1,7 +1,7 @@
 import pandas as pd
 
-dir_name = "/for10_imple_codes/result/BERT/BART/Aug_BERT_bart.csv"
-normal_name = "/Users/ruin/Desktop/Data_Augmentation/for10_imple_codes/result/BERT/T5_Large/Normal_BERT_t5_large.csv"
+dir_name = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\CNN\T5_Large\Aug_CNN_t5_large_glove.csv"
+normal_name = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\CNN\T5_Large\Normal_CNN_t5_large_glove.csv"
 
 result_data = pd.read_csv(dir_name)
 normal_data = pd.read_csv(normal_name)
@@ -30,7 +30,7 @@ def making_cal_csv(numbers):
 
     return df
 
-csv_name = "/Users/ruin/Desktop/Data_Augmentation/for10_imple_codes/result/accuracy_csv/BERT_BART_accuracy.csv"
+csv_name = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\accuracy_csv\CNN_T5_large_accuracy2.csv"
 
-df_acc = making_cal_csv(5)
+df_acc = making_cal_csv(10)
 df_acc.to_csv(csv_name, index=False)
