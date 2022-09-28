@@ -132,7 +132,7 @@ if __name__ == '__main__':
     batch_size = 6
 
     start = 0
-    end = 10000
+    end = 12500
 
     while start < 50000:
         print("present :", start)
@@ -355,5 +355,5 @@ if __name__ == '__main__':
 
             print(i + 1, "번째 학습 끝")
 
-        start = start + 10000
-        end = end + 10000
+        start = start + 12500
+        end = end + 12500
