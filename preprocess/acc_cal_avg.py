@@ -46,12 +46,11 @@ def avg_print(dir, acc_type):
 
     return acc_list
 
-file_name = "/Users/ruin/Desktop/Data_Augmentation/for10_imple_codes/result/accuracy_csv"
+file_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\accuracy_csv"
 file_list = os.listdir(file_name)
 
 def preprocessing_file_dir(text):
     text = re.sub('.csv', '', text)
-    text = re.sub('.DS_Store', '', text)
     text = re.sub('_accuracy', '', text)
 
     return text
