@@ -232,15 +232,15 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 if __name__ == '__main__':
-    file_path = "amazon_t5_base_with_huggingface_sentiment.csv"
-    glove_path = "glove.6B.100d.txt"
+    file_path = r"D:\ruin\data\amazon\amazon_review_polarity_csv\amazon_t5_base_with_huggingface_sentiment.csv"
+    glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
 
     imdb_csv = file_path
     df_imdb = pd.read_csv(imdb_csv)
     df_imdb = df_imdb.drop(['Unnamed: 0'], axis=1)
     # df_imdb = df_imdb.sample(frac=1).reset_index(drop=True)
 
-    spot = 5000
+    spot = 50000
 
     start = 0
     end = spot
