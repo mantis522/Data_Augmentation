@@ -1,7 +1,7 @@
 import pandas as pd
 
-aug_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\BERT\T5_Base\Amazon_Aug_BERT_t5_base.csv"
-normal_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\BERT\T5_Large\Amazon_Normal_BERT_t5_large.csv"
+aug_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\CNN\T5_Large\Amazon_Aug_CNN_t5_large_glove.csv"
+normal_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\CNN\BART\Amazon_Normal_CNN_bart_glove.csv"
 # normal 파일은 분류 모델당 하나만 있기 때문에 딱히 파일 경로 바꿔줄 필요 없음.
 
 result_data = pd.read_csv(aug_name)
@@ -31,7 +31,7 @@ def making_cal_csv(numbers):
 
     return df
 
-csv_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\accuracy_csv\Amazon_BERT_T5_base_accuracy.csv"
+csv_name = r"C:\Users\RUIN\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\accuracy_csv\Amazon_CNN_t5_large_accuracy.csv"
 
-df_acc = making_cal_csv(5)
+df_acc = making_cal_csv(10)
 df_acc.to_csv(csv_name, index=False)
