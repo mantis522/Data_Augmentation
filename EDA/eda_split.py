@@ -19,7 +19,7 @@ while start < 50000:
     origin_label = np.array(original_data['original_label'].tolist())
     origin_label = list(origin_label)
 
-    f = open('D:/ruin/data/eda_nlp/' + 'test' + str(end) + '.txt', 'w', encoding='utf-8')
+    f = open('D:/ruin/data/eda_nlp/' + 'train' + str(end) + '.txt', 'w', encoding='utf-8')
     for i in range(len(origin_text)):
         data = str(origin_label[i]) + '\t' + origin_text[i] + '\n'
         f.write(data)
