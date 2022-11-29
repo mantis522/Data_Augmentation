@@ -4,8 +4,8 @@ import re
 import natsort
 from tqdm import tqdm
 
-file_path = r"D:\ruin\data\eda_nlp\amazon_aug"
-output_path = r"D:\ruin\data\eda_nlp\amazon_aug_csv"
+file_path = r"D:\ruin\data\eda_nlp\imdb\train_aug"
+output_path = r"D:\ruin\data\eda_nlp\imdb\train_aug_csv"
 file_list = os.listdir(file_path)
 file_list = natsort.natsorted(file_list)
 
@@ -18,7 +18,7 @@ for input_file in tqdm(file_list):
     text_lst = []
     label_lst = []
 
-    f = open(text_file, 'r')
+    f = open(text_file, 'r', encoding='utf-8')
     lines = f.readlines()
 
     for line in lines:

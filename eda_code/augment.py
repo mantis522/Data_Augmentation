@@ -78,8 +78,8 @@ if __name__ == "__main__":
     alpha_ri = 0.0
     alpha_rd = 0.1
 
-    file_path = r"D:\ruin\data\eda_nlp\imdb"
-    output_path = r"D:\ruin\data\eda_nlp\imdb_aug"
+    file_path = r"D:\ruin\data\eda_nlp\amazon\train"
+    output_path = r"D:\ruin\data\eda_nlp\amazon\train_aug"
     file_list = os.listdir(file_path)
     file_list = natsort.natsorted(file_list)
 
