@@ -1,4 +1,8 @@
 from eda import *
+import os
+import natsort
+import re
+from tqdm import tqdm
 
 #arguments to be parsed from command line
 # import argparse
@@ -51,8 +55,8 @@ from eda import *
 #generate more data with standard augmentation
 def gen_eda(train_orig, output_file, alpha_sr, alpha_ri, alpha_rs, alpha_rd, num_aug=9):
 
-    writer = open(output_file, 'w')
-    lines = open(train_orig, 'r').readlines()
+    writer = open(output_file, 'w', encoding='utf-8')
+    lines = open(train_orig, 'r', encoding='utf-8').readlines()
 
     for i, line in enumerate(lines):
         parts = line[:-1].split('\t')
@@ -63,17 +67,27 @@ def gen_eda(train_orig, output_file, alpha_sr, alpha_ri, alpha_rs, alpha_rd, num
             writer.write(label + "\t" + aug_sentence + '\n')
 
     writer.close()
-    print("generated augmented sentences with eda for " + train_orig + " to " + output_file + " with num_aug=" + str(num_aug))
+    # print("generated augmented sentences with eda for " + train_orig + " to " + output_file + " with num_aug=" + str(num_aug))
 
 #main function
 if __name__ == "__main__":
-    train_file = r"C:\Users\ruin\PycharmProjects\eda_nlp\data\test500.txt"
-    output_file = r"C:\Users\ruin\PycharmProjects\eda_nlp\test500_aug.txt"
+
     num_aug = 16
     alpha_sr = 0.05
     alpha_rs = 0.0
     alpha_ri = 0.0
     alpha_rd = 0.1
 
-    #generate augmented sentences and output into a new file
-    gen_eda(train_orig=train_file, output_file=output_file, alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs, alpha_rd=alpha_rd, num_aug=num_aug)
+    file_path = r"D:\ruin\data\eda_nlp\imdb"
+    output_path = r"D:\ruin\data\eda_nlp\imdb_aug"
+    file_list = os.listdir(file_path)
+    file_list = natsort.natsorted(file_list)
+
+    for input_file in tqdm(file_list):
+        extracted_num = re.sub('train', '', input_file)
+        extracted_num = re.sub('.txt', '', extracted_num)
+        output_file = 'aug' + extracted_num + '.txt'
+
+        gen_eda(train_orig=file_path+'\\'+input_file, output_file=output_path+'\\'+output_file,
+                alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs,
+                alpha_rd=alpha_rd, num_aug=num_aug)
