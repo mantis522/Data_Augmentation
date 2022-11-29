@@ -261,7 +261,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\CNN\EDA\EDA_IMDB_CNN.csv"
+            csv_filename = r"/for10_imple_codes/result/Amazon/CNN/EDA/EDA_IMDB_CNN.csv"
             result_list = [now, i + 1, len(aug_df), len(aug_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
