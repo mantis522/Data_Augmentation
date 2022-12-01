@@ -121,8 +121,8 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 if __name__ == '__main__':
-    aug_path = r"D:\ruin\data\eda_nlp\imdb\train_aug_csv"
-    test_path = r"D:\ruin\data\eda_nlp\imdb\test_csv"
+    aug_path = r"D:\ruin\data\eda_nlp\amazon\train_aug_csv"
+    test_path = r"D:\ruin\data\eda_nlp\amazon\test_csv"
     glove_path = r"D:\ruin\data\glove.6B\glove.6B.100d.txt"
 
     batch_size = 256
@@ -261,8 +261,8 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"/for10_imple_codes/result/Amazon/CNN/EDA/EDA_IMDB_CNN.csv"
-            result_list = [now, i + 1, len(aug_df), len(aug_df), start, end, acc, loss,
+            csv_filename = "EDA_Amazon_CNN.csv"
+            result_list = [now, j + 1, len(aug_df), len(aug_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
             if os.path.isfile(csv_filename):
@@ -288,7 +288,7 @@ if __name__ == '__main__':
             except PermissionError:
                 print("please close you Excel")
 
-            print(i + 1, "learning finish")
+            print(j + 1, "learning finish")
 
         start = start + point
         end = end + point
