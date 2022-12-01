@@ -122,8 +122,8 @@ class ModelHelper:
         self.model.load_weights(latest)
 
 if __name__ == '__main__':
-    aug_path = r"D:\ruin\data\eda_nlp\amazon\train_aug_csv"
-    test_path = r"D:\ruin\data\eda_nlp\amazon\test_csv"
+    aug_path = "D:/ruin/data/eda_nlp/amazon/train_aug_csv"
+    test_path = "D:/ruin/data/eda_nlp/amazon/test_csv"
 
     maxlen = 200
     class_num = 2
@@ -149,34 +149,6 @@ if __name__ == '__main__':
         test_df = pd.read_csv(test_name)
 
         test_df, val_df = train_test_split(test_df, test_size=0.5, random_state=0)
-
-        train_df = train_df.reset_index(drop=True)
-        test_df = test_df.reset_index(drop=True)
-        val_df = val_df.reset_index(drop=True)
-
-        def A2D_train(data_df):
-            text_list = []
-            label_list = []
-            for i in range(len(data_df)):
-                original_label = int(data_df['original_label'][i])
-                huggingface_label = int(data_df['huggingface_sentiment'][i])
-                if original_label == huggingface_label:
-                    text_list.append(data_df['summarized_text'][i])
-                    label_list.append(huggingface_label)
-
-            return text_list, label_list
-
-        sumtext_list, sumlabel_list = A2D_train(train_df)
-
-        def concat_df(data_df, text_list, label_list):
-            df = pd.DataFrame([x for x in zip(text_list, label_list)])
-            df.columns = ['original_text', 'original_label']
-            concating = pd.concat([data_df, df])
-            concating = concating.reset_index(drop=True)
-
-            return concating
-
-        train_df = concat_df(train_df, sumtext_list, sumlabel_list)
 
         def get_masks(tokens):
             """Masks: 1 for real tokens and 0 for paddings"""
@@ -247,6 +219,7 @@ if __name__ == '__main__':
             sentence = re.sub(r"\s+", " ", sentence)
             return sentence
 
+
         slow_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         save_path = "bert_base_uncased/"
         if not os.path.exists(save_path):
@@ -255,6 +228,7 @@ if __name__ == '__main__':
 
         tokenizer = BertWordPieceTokenizer("bert_base_uncased/vocab.txt", lowercase=True)
         tokenizer.enable_truncation(maxlen - 2)
+
 
         def preprocessing_data(dataframe):
             reviews = []
@@ -270,6 +244,7 @@ if __name__ == '__main__':
 
             return reviews, label
 
+
         x_train, y_train = preprocessing_data(train_df)
         x_test, y_test = preprocessing_data(test_df)
         x_val, y_val = preprocessing_data(val_df)
@@ -279,13 +254,13 @@ if __name__ == '__main__':
         print('X_val size:', len(y_val))
 
         avg_list = []
-        numbers_of_times = 5
+        numbers_of_times = 10
 
         for i in range(numbers_of_times):
             print(i + 1, "learning start")
 
             use_early_stop = True
-            MODEL_NAME = 'BERT-Aug-EDA'
+            MODEL_NAME = 'BERT-Normal-EDA'
 
             tensorboard_log_dir = 'logs/{}'.format(MODEL_NAME)
             checkpoint_path = 'save_model_dir/' + MODEL_NAME + '/cp-{epoch:04d}.ckpt'
@@ -334,7 +309,7 @@ if __name__ == '__main__':
             print("Average accuracy:", average_acc)
 
             now = datetime.datetime.now()
-            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\Amazon\BERT\T5_Large\Amazon_Aug_BERT_t5_large.csv"
+            csv_filename = r"C:\Users\ruin\PycharmProjects\Data_Augmentation\for10_imple_codes\result\BERT\Amazon_Normal_BERT_t5_large.csv"
             result_list = [now, i + 1, len(train_df), len(train_df), start, end, acc, loss,
                            recall, precision, F1_micro, F1_macro, average_acc]
 
@@ -359,9 +334,9 @@ if __name__ == '__main__':
                 f.close()
 
             except PermissionError:
-                print("Please close your excel")
+                print("Please close your Excel")
 
-            print(i + 1, "learning start")
+            print(i + 1, "learning over")
 
         start = start + point
         end = end + point
