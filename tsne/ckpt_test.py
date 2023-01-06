@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import csv
+import re
 
 class MyModel(tf.keras.Model):
     def __init__(self, vocab_size, embedding_matrix, text_num):
@@ -141,6 +142,11 @@ if __name__ == '__main__':
     t.fit_on_texts(text_encoding)
     vocab_size = len(t.word_index) + 1
     sequences = t.texts_to_sequences(text_encoding)
+    word_to_index = t.word_index
+
+    index_to_word = {}
+    for key, value in word_to_index.items():
+        index_to_word[value+3] = key
 
     def max_text():
         for i in range(1, len(sequences)):
@@ -230,3 +236,29 @@ if __name__ == '__main__':
     print("Restored model, precision:", precision)
     print("Restored model, f1_micro:", F1_micro)
     print("Restored model, f1_macro:", F1_macro)
+
+    def sentiment_predict(new_sentence):
+        new_sentence = re.sub('[^0-9a-zA-Z ]', '', new_sentence).lower()
+        encoded = []
+        vector = np.vectorize(np.float_)
+
+        for word in new_sentence.split():
+            try :
+                if word_to_index[word] <= 10000:
+                    encoded.append(word_to_index[word]+3)
+
+                else:
+                    encoded.append(2)
+            except KeyError:
+                encoded.append(2)
+
+        pad_sequence = sequence.pad_sequences([encoded], maxlen=maxlen)
+        score = model_helper.model.predict(pad_sequence)
+
+        if(score[0][0] > score[0][1]):
+            print("{:.2f}% Probably a negative review.".format((score[0][0]) * 100))
+        else:
+            print("{:.2f}% Probably a positive review.".format((score[0][1]) * 100))
+
+    test_input = """Though the selections in this book are excellent and unexpected, Birkerts seems in his analyses to be overly elementary. He draws too many concrete inferences from ambiguous material and situations. I'm quite dissapointed with his analyses..... they seem much better suited as introductory high school texts than college ones. His analyses and writings about his chosen subject seem rather dry. I reccomend this text only for its selection of international authors whom I may not have discovered had it not been for this text. The content of discussion is dismissible, however. As an alternative, I suggest Ciardi's "How Does A Poem Mean?" He covers basically the same territory, but does so with passion and an obvious joy in the unnailable. A much more thoughtful treatment, ultimately leaving the task of determining meaning & appreciation of a piece (or Performance, as he explains) to the reader."""
+    print(sentiment_predict(test_input))
