@@ -1,13 +1,5 @@
-import pandas as pd
-import nltk
+from sklearn.utils.extmath import softmax
+import numpy as np
 
-file_path = r"D:\ruin\data\amazon\amazon_review_polarity_csv\amazon_t5_large_with_huggingface_sentiment.csv"
-df_imdb = pd.read_csv(file_path)
-
-
-count = 0
-
-for i in range(len(df_imdb)):
-    count = count + len(df_imdb['summarized_text'][i].split())
-
-print(count / len(df_imdb))
+X = np.array([[12.5, 11.875, 10.625], [8.125, 12.5, 8.125], [12.5, 7.5, 13.75]])
+print(softmax(X.astype(np.double)))
